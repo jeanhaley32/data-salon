@@ -26,7 +26,7 @@ figure img{width:100%;height:auto;display:block;border:1px solid var(--line);bor
 footer{border-top:1px solid var(--line);margin-top:3rem;}
 footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var(--mono);font-size:.7rem;color:var(--graphite);}
 </style></head><body>
-<nav><div class="in"><span class="mk"></span><a href="/salon">&larr; Data Salon</a></div></nav>
+<nav><div class="in"><span class="mk"></span><a href="/data-salon">&larr; Data Salon</a></div></nav>
 <div class="wrap">
   <div class="rule-top"></div>
   <p class="eyebrow">Built &amp; hosted &nbsp;·&nbsp; a tool the platform runs</p>
@@ -36,7 +36,7 @@ footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var
     <div><h2>What it does</h2><p>A live window into the vector database that powers the email search, every collection, its size, and its health, browsable in the browser.</p></div>
     <div><h2>How it's built</h2><p>Qdrant's own dashboard, running in the Kubernetes cluster. The main collection, email_index, holds 100,000+ points at 768 dimensions with cosine distance, the numeric fingerprints of every indexed email. Alongside it are demo and test collections and a small "memory" store.</p></div>
   </div>
-  <div class="live"><span class="livenote">This tool runs on a private network — the screenshot above shows what it looks like.</span></div>
+  <div class="live"><a class="btn" href="/data-salon/qdrant/dashboard">Open the live tool &rarr;</a><span class="livenote">runs on the tailnet — opens from inside the network</span></div>
 </div>
-<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
+<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/data-salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
 </body></html>

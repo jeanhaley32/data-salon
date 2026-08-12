@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building a Home Control Plane From Parts — Jean Haley</title>
+<style>
+  :root{
+    --paper:#eceff4; --plate:#fff; --cobalt:#1633e0; --ember:#f5451b;
+    --lime:#c6f224; --teal:#00786a; --ink:#0e1116; --graphite:#59626f;
+    --line:#d3d8e0; --bg:var(--paper); --fg:var(--ink);
+    --serif:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --paper:#0e1116; --plate:#161a22; --ink:#e7ebf2; --graphite:#9aa4b2;
+      --line:#262c38; --cobalt:#6f86ff; --bg:#0e1116; --fg:#e7ebf2;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1116; --plate:#161a22; --ink:#e7ebf2; --graphite:#9aa4b2;
+    --line:#262c38; --cobalt:#6f86ff; --bg:#0e1116; --fg:#e7ebf2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--serif); line-height:1.62; font-size:1.12rem;
+    -webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px; background-position:-1px -1px;
+  }
+  .rule{height:3px;background:linear-gradient(90deg,var(--cobalt) 0 42%,var(--lime) 42% 58%,var(--line) 58% 100%)}
+  .top{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite)}
+  .top .sq{width:14px;height:14px;background:var(--cobalt)}
+  .top a{color:var(--cobalt);text-decoration:none}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px 6rem}
+  header.post{padding:3.4rem 0 2rem;border-bottom:1px solid var(--line);margin-bottom:2.4rem}
+  .eyebrow{font-family:var(--mono);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cobalt);margin-bottom:1.1rem}
+  h1{font-size:clamp(2.1rem,5.4vw,3.4rem);line-height:1.05;margin:0 0 1rem;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+  .standfirst{font-size:1.22rem;color:var(--graphite);margin:0 0 1.5rem;line-height:1.5}
+  .byline{font-family:var(--mono);font-size:.78rem;color:var(--graphite);letter-spacing:.04em;display:flex;gap:.6rem;flex-wrap:wrap}
+  .byline b{color:var(--fg);font-weight:600}
+  article p{margin:0 0 1.35rem}
+  article h2{font-size:1.55rem;line-height:1.15;margin:3rem 0 1rem;font-weight:600;letter-spacing:-.01em;position:relative;padding-top:1.4rem}
+  article h2::before{content:"";position:absolute;top:0;left:0;width:44px;height:3px;background:var(--cobalt)}
+  article a{color:var(--cobalt)}
+  .lede::first-letter{font-size:3.4rem;line-height:.82;float:left;padding:.05em .12em 0 0;font-weight:600;color:var(--cobalt)}
+  .flow{font-family:var(--mono);font-size:.86rem;background:var(--plate);border:1px solid var(--line);border-left:3px solid var(--cobalt);padding:1rem 1.1rem;margin:1.6rem 0;color:var(--fg);overflow-x:auto;white-space:nowrap}
+  blockquote{margin:2rem 0;padding:1.2rem 1.4rem;background:var(--plate);border:1px solid var(--line);border-left:3px solid var(--teal);font-size:1.06rem}
+  blockquote p{margin:0}
+  blockquote.warn{border-left-color:var(--ember)}
+  blockquote.warn .tag{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin-bottom:.5rem}
+  .services{list-style:none;padding:0;margin:1.4rem 0;display:grid;gap:.5rem}
+  .services li{font-family:var(--mono);font-size:.9rem;background:var(--plate);border:1px solid var(--line);padding:.7rem .9rem;display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+  .services a{text-decoration:none}
+  .services .k{color:var(--fg)}
+  .services .v{color:var(--graphite);font-size:.8rem}
+  footer.post{margin-top:3.5rem;padding-top:1.6rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.78rem;color:var(--graphite)}
+  footer.post a{color:var(--cobalt);text-decoration:none}
+  .tick{position:fixed;width:10px;height:10px;border:1.5px solid var(--graphite);opacity:.5;pointer-events:none}
+  .tick.tl{top:10px;left:10px;border-right:0;border-bottom:0}
+  .tick.tr{top:10px;right:10px;border-left:0;border-bottom:0}
+  .tick.bl{bottom:10px;left:10px;border-right:0;border-top:0}
+  .tick.br{bottom:10px;right:10px;border-left:0;border-top:0}
+  @media(max-width:640px){body{font-size:1.05rem}.tick{display:none}}
+</style>
+</head>
+<body>
+<div class="rule"></div>
+<div class="tick tl"></div><div class="tick tr"></div><div class="tick bl"></div><div class="tick br"></div>
+<div class="top"><span class="sq"></span><span>Data Salon</span><span>·</span><a href="/data-salon">← everything behind the talk</a></div>
+
+<div class="wrap">
+<header class="post">
+  <div class="eyebrow">Data Salon · the short version</div>
+  <h1>Building a Home Control Plane From Parts</h1>
+  <p class="standfirst">The talk in about 450 words: how a message relay grew, one part at a time, into the control plane for a whole home lab.</p>
+  <div class="byline"><span>By <b>Jean Haley</b></span><span>·</span><span>Site Reliability Engineer</span><span>·</span><span>Data Salon, Aug 2026</span></div>
+</header>
+
+<article>
+<p class="lede">I set out to build one small thing: a way to detach a work session from my desk, so I could close my laptop, walk away, and keep working from my phone through a secure chat interface. What it became, by accident, was the control plane for my entire home lab, running on a single salvaged ThinkPad.</p>
+
+<p>The method was the point. I don't design big systems up front. I define the smallest version that solves the task, decompose it into components with clean boundaries, and build interfaces between them. That makes each piece extensible, and it means the next problem can usually be solved by adding one more part rather than rebuilding.</p>
+
+<p>The first part was a Telegram bot wired to a running Claude Code session through its channels feature, a relay I called <strong>relayd</strong>. Almost immediately it forced a security question: with no real way to authenticate a chat user, I had to gate every message at the relay before it reached the model, and split admins from regular users. The moment I drew that line, the thing became multi-tenanted. I invited a few friends to test it, and suddenly several people were holding separate conversations with the same model at once.</p>
+
+<blockquote class="warn">
+  <span class="tag">A necessary caveat</span>
+  <p>This is only safe among people I trust. You should never rely on a model as your security boundary. Gate a stochastic system behind a deterministic one.</p>
+</blockquote>
+
+<p>Next it needed a pulse. I gave the model a scheduler so it could run tasks at set times and even schedule itself, waking up later to finish something. That one addition turned a chat bot into something much closer to an assistant.</p>
+
+<p>Then I made it captain of its own ship: a bare Linux box it fully administers, reachable only over a Tailscale tunnel. Once it could touch the machine and the network, it needed senses, so I added an observability stack. Routing those alerts back through the relay gave it a nervous system: it notices when it's low on memory or disk, investigates, and tells me. It can begin to self-heal.</p>
+
+<p>From there the surface kept widening on its own. A port scan turned up an open port on my TV, so I built a phone remote for it. A Bluetooth thermometer became an "open your windows" alert.</p>
+
+<p>None of this was on a roadmap. I built the parts, each with a clean edge, and the platform emerged from setting them next to each other. That's the whole point: complex systems that work tend to grow from simple systems that work.</p>
+
+<footer class="post">
+  <p>This is the short version. The full write-up is at <a href="/data-salon/writeup">/writeup</a>, and everything behind the talk is at <a href="/data-salon">/salon</a>.</p>
+</footer>
+</article>
+</div>
+</body>
+</html>

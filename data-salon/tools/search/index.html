@@ -26,7 +26,7 @@ figure img{width:100%;height:auto;display:block;border:1px solid var(--line);bor
 footer{border-top:1px solid var(--line);margin-top:3rem;}
 footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var(--mono);font-size:.7rem;color:var(--graphite);}
 </style></head><body>
-<nav><div class="in"><span class="mk"></span><a href="/salon">&larr; Data Salon</a></div></nav>
+<nav><div class="in"><span class="mk"></span><a href="/data-salon">&larr; Data Salon</a></div></nav>
 <div class="wrap">
   <div class="rule-top"></div>
   <p class="eyebrow">Built &amp; hosted &nbsp;·&nbsp; a tool the platform runs</p>
@@ -37,7 +37,7 @@ footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var
     <div><h2>How it's built</h2><p>Every email is turned into a vector embedding and stored in a Qdrant vector database, over 100,000 messages indexed. A query is embedded the same way and matched by cosine similarity, so results rank by semantic closeness rather than literal text. It's available both as this web interface and as a full terminal UI over SSH.</p>
 <p style="margin-top:1.1rem;padding:.85rem 1.05rem;border-left:3px solid var(--teal,#00786a);background:rgba(0,120,106,.06);font-size:.94rem;"><b>Editor's note:</b> as with most of this, it's a work in progress. The vector-database indexing is real, and works surprisingly well. The web and terminal UIs are still being built out — they're really cool, but they lack important features needed to properly read and manage emails.</p></div>
   </div>
-  <div class="live"><span class="livenote">This tool runs on a private network — the screenshot above shows what it looks like.</span></div>
+  <div class="live"><a class="btn" href="/data-salon/search/">Open the live tool &rarr;</a><span class="livenote">runs on the tailnet — opens from inside the network</span></div>
 </div>
-<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
+<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/data-salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
 </body></html>

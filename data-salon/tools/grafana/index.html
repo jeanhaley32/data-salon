@@ -26,7 +26,7 @@ figure img{width:100%;height:auto;display:block;border:1px solid var(--line);bor
 footer{border-top:1px solid var(--line);margin-top:3rem;}
 footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var(--mono);font-size:.7rem;color:var(--graphite);}
 </style></head><body>
-<nav><div class="in"><span class="mk"></span><a href="/salon">&larr; Data Salon</a></div></nav>
+<nav><div class="in"><span class="mk"></span><a href="/data-salon">&larr; Data Salon</a></div></nav>
 <div class="wrap">
   <div class="rule-top"></div>
   <p class="eyebrow">Built &amp; hosted &nbsp;·&nbsp; a tool the platform runs</p>
@@ -36,7 +36,7 @@ footer .in{max-width:960px;margin:0 auto;padding:1.4rem 5vw 3rem;font-family:var
     <div><h2>What it does</h2><p>The observability front door, live dashboards over every metric and log the machine collects, from CPU and disk to weather, network traffic, and the health of every service.</p></div>
     <div><h2>How it's built</h2><p>Prometheus scrapes thirteen targets across the host, the lab services, and the Kubernetes cluster; Loki holds the logs; Grafana renders both and evaluates the alert rules. When a rule fires, it doesn't page anyone directly, it routes back through the relay and into the model, which decides whether and how to raise it. (Shown here at its login screen; the dashboards themselves stay behind auth.)</p></div>
   </div>
-  <div class="live"><span class="livenote">This tool runs on a private network — the screenshot above shows what it looks like.</span></div>
+  <div class="live"><a class="btn" href="/data-salon/grafana/">Open the live tool &rarr;</a><span class="livenote">runs on the tailnet — opens from inside the network</span></div>
 </div>
-<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
+<footer><div class="in"><b>Rodin</b> — one of the tools built and hosted on the platform. Back to the <a href="/data-salon" style="color:var(--cobalt)">Data Salon</a>.</div></footer>
 </body></html>

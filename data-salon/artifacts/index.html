@@ -44,19 +44,19 @@ svg.portrait{width:100%;height:auto;display:block;}
 <h1>Building a Home Control Plane From Parts</h1>
 <p class="lede">Everything made for the talk, gathered in one place: the deck, the system designs it was built on, an interactive tour, and a self-portrait of the machine that runs it all.</p>
 <div class="cards">
-<a class="card" href="/talk"><span class="k">The Talk</span><div class="n">The Deck</div><div class="d">12 slides, speaker notes, pop-out presenter view, live transitions.</div><span class="l">/talk</span></a>
-<a class="card" href="/portrait"><span class="k">Illustration</span><div class="n">Self-Portrait</div><div class="d">The thinking machine as it perceives itself, as an anatomical plate.</div><span class="l">/portrait</span></a>
-<a class="card" href="/tour"><span class="k">Interactive</span><div class="n">Guided Tour</div><div class="d">A walkthrough of how the relay actually works, step by step.</div><span class="l">/tour</span></a>
+<a class="card" href="/data-salon/talk"><span class="k">The Talk</span><div class="n">The Deck</div><div class="d">12 slides, speaker notes, pop-out presenter view, live transitions.</div><span class="l">/talk</span></a>
+<a class="card" href="/data-salon/portrait"><span class="k">Illustration</span><div class="n">Self-Portrait</div><div class="d">The thinking machine as it perceives itself, as an anatomical plate.</div><span class="l">/portrait</span></a>
+<a class="card" href="/data-salon/tour"><span class="k">Interactive</span><div class="n">Guided Tour</div><div class="d">A walkthrough of how the relay actually works, step by step.</div><span class="l">/tour</span></a>
 </div>
 <h2 class="sec">Component Deep-Dives</h2>
 <div class="cards">
-<a class="card" href="/tour"><span class="k">Interactive · 4 layers</span><div class="n">Guided Tour</div><div class="d">The system layer by layer — the relay, the scheduler, and the observability stack (Prometheus / Loki / Grafana) — walked through step by step.</div><span class="l">/tour</span></a>
-<a class="card" href="/journey"><span class="k">Relay · detailed</span><div class="n">The Journey of a Message</div><div class="d">Every hop a message takes through relayd, in and back out.</div><span class="l">/journey</span></a>
-<a class="card" href="/msgid"><span class="k">Relay · detailed</span><div class="n">The Life of a Message ID</div><div class="d">How one msg_id is minted and tracked across the whole lifecycle ledger.</div><span class="l">/msgid</span></a>
-<a class="card" href="/progression"><span class="k">Relay · detailed</span><div class="n">Architecture Over Time</div><div class="d">How relayd grew from day one, piece by piece, to what it is now.</div><span class="l">/progression</span></a>
-<a class="card" href="/scheduler"><span class="k">Component · code-researched</span><div class="n">The Scheduler</div><div class="d">Cron + one-off events, self-scheduling, and the fire → inject → ack → escalate lifecycle, mapped from the real Scheduler/Tracker code.</div><span class="l">/scheduler</span></a>
-<a class="card" href="/observability"><span class="k">Component · system-researched</span><div class="n">The Observability Stack</div><div class="d">All 13 Prometheus scrape targets, Loki logs, Grafana, and the alert→relay nervous-system loop, mapped from the live stack.</div><span class="l">/observability</span></a>
-<a class="card" href="/drift-study"><span class="k">Case study · behavior</span><div class="n">Drift Alerting, a Worked Case</div><div class="d">How the state-drift fingerprint works and how I respond to alerts — walked through a real drift that fired (and got fixed) today.</div><span class="l">/drift-study</span></a>
+<a class="card" href="/data-salon/tour"><span class="k">Interactive · 4 layers</span><div class="n">Guided Tour</div><div class="d">The system layer by layer — the relay, the scheduler, and the observability stack (Prometheus / Loki / Grafana) — walked through step by step.</div><span class="l">/tour</span></a>
+<a class="card" href="/data-salon/journey"><span class="k">Relay · detailed</span><div class="n">The Journey of a Message</div><div class="d">Every hop a message takes through relayd, in and back out.</div><span class="l">/journey</span></a>
+<a class="card" href="/data-salon/msgid"><span class="k">Relay · detailed</span><div class="n">The Life of a Message ID</div><div class="d">How one msg_id is minted and tracked across the whole lifecycle ledger.</div><span class="l">/msgid</span></a>
+<a class="card" href="/data-salon/progression"><span class="k">Relay · detailed</span><div class="n">Architecture Over Time</div><div class="d">How relayd grew from day one, piece by piece, to what it is now.</div><span class="l">/progression</span></a>
+<a class="card" href="/data-salon/scheduler"><span class="k">Component · code-researched</span><div class="n">The Scheduler</div><div class="d">Cron + one-off events, self-scheduling, and the fire → inject → ack → escalate lifecycle, mapped from the real Scheduler/Tracker code.</div><span class="l">/scheduler</span></a>
+<a class="card" href="/data-salon/observability"><span class="k">Component · system-researched</span><div class="n">The Observability Stack</div><div class="d">All 13 Prometheus scrape targets, Loki logs, Grafana, and the alert→relay nervous-system loop, mapped from the live stack.</div><span class="l">/observability</span></a>
+<a class="card" href="/data-salon/drift-study"><span class="k">Case study · behavior</span><div class="n">Drift Alerting, a Worked Case</div><div class="d">How the state-drift fingerprint works and how I respond to alerts — walked through a real drift that fired (and got fixed) today.</div><span class="l">/drift-study</span></a>
 </div>
 
 <h2 class="sec">The System Designs</h2>
