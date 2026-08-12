@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>relayd — the life of a message ID</title>
+<style>
+  :root {
+    --paper: #eceff4; --plate: #ffffff; --vellum: #f7f9fc; --line: #dce1ea;
+    --rule-strong: #c3cad6; --ink: #0e1116; --graphite: #59626f;
+    --cobalt: #1633e0; --wash: #e7eaff; --ember: #f5451b; --ash: #ffeae3;
+    --lime: #c6f224; --teal: #00786a; --teal-soft: #e2f5f1;
+    --shadow: 0 1px 0 rgba(14,17,22,0.04), 0 2px 4px rgba(14,17,22,0.03), 0 24px 48px -20px rgba(22,51,224,0.16);
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; color: var(--ink); font-family: var(--sans); overflow-x: hidden;
+    background: linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px, var(--paper); }
+  header { padding: 2.6rem 5vw 1.2rem; max-width: 1200px; margin: 0 auto; }
+  .rule-top { height: 3px; width: 100%; background: linear-gradient(to right, var(--cobalt) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%); margin-bottom: 1.15rem; }
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem 2rem; }
+  .brand { display: flex; align-items: center; gap: 0.7rem; }
+  .brand-mark { width: 28px; height: 28px; flex: none; background: var(--cobalt); display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .kicker { font-family: var(--mono); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graphite); line-height: 1.5; }
+  .kicker b { color: var(--ink); font-weight: 700; display: block; }
+  .masthead-meta { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); text-align: right; line-height: 1.7; }
+  .masthead-meta em { font-style: normal; color: var(--ink); }
+  main { max-width: 1200px; margin: 0 auto; padding: 0 5vw 3rem; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 2.6rem); letter-spacing: -0.02em; margin: 1.2rem 0 0.5rem; }
+  h1 em { font-style: italic; color: var(--cobalt); }
+  .sub { color: var(--graphite); font-size: 1.02rem; line-height: 1.55; max-width: 56rem; margin: 0 0 1.8rem; }
+  .sub code { font-family: var(--mono); font-size: 0.86em; background: var(--plate); border: 1px solid var(--line); padding: 0.03em 0.32em; border-radius: 4px; }
+
+  .plate { position: relative; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 1.6rem 1.6rem 1.3rem; }
+  .plate::before, .plate::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  .plate::before { top: -1px; left: -1px; border-top: 2px solid var(--cobalt); border-left: 2px solid var(--cobalt); }
+  .plate::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cobalt); border-right: 2px solid var(--cobalt); }
+  .plate-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.8rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .plate-head h2 { font-family: var(--display); font-weight: 400; font-size: 1.2rem; margin: 0; }
+  .legend { display: flex; gap: 1.1rem; font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--graphite); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend i { width: 20px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid; }
+  .legend .spine i { background: var(--wash); border-color: var(--cobalt); }
+  .legend .ledger i { background: var(--vellum); border-color: var(--rule-strong); }
+  .legend .divert i { background: var(--ash); border-color: var(--ember); }
+  .legend .replyk i { background: var(--teal-soft); border-color: var(--teal); }
+
+  svg.mid { width: 100%; height: auto; display: block; overflow: visible; }
+  .spine-rail { stroke: var(--cobalt); stroke-width: 2.4; fill: none; }
+  .stage rect { fill: var(--wash); stroke: var(--cobalt); stroke-width: 1.5; }
+  .stage.reply rect { fill: var(--teal-soft); stroke: var(--teal); }
+  .stage text.t { font-family: var(--sans); font-size: 11.5px; font-weight: 650; fill: var(--ink); text-anchor: middle; }
+  .stage.reply text.t { fill: var(--teal); }
+  .stage text.s { font-family: var(--mono); font-size: 8px; fill: var(--graphite); letter-spacing: 0.04em; text-anchor: middle; }
+  .idtag { font-family: var(--mono); font-size: 9px; font-weight: 700; fill: var(--cobalt); text-anchor: middle; }
+  .idtag.reply { fill: var(--teal); }
+  .stub { stroke: var(--rule-strong); stroke-width: 1.3; fill: none; }
+  .ledger rect { fill: var(--vellum); stroke: var(--rule-strong); stroke-width: 1.1; }
+  .ledger text.ev { font-family: var(--mono); font-size: 9px; font-weight: 700; fill: var(--ink); }
+  .ledger text.dsc { font-family: var(--mono); font-size: 7.5px; fill: var(--graphite); }
+  .ledger.divert rect { fill: var(--ash); stroke: var(--ember); }
+  .ledger.divert text.ev { fill: #c8431e; }
+  .backlink { stroke: var(--teal); stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+  .backlink-label { font-family: var(--mono); font-size: 8px; fill: var(--teal); }
+  .corr { stroke: var(--ember); stroke-width: 1.4; fill: none; stroke-dasharray: 2 2; }
+  .corr-label { font-family: var(--mono); font-size: 8px; fill: #c8431e; }
+
+  .note { margin-top: 1.4rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.8rem; }
+  .note .card { background: var(--vellum); border: 1px solid var(--line); border-radius: 8px; padding: 0.85rem 1rem; }
+  .note .card h3 { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cobalt); margin: 0 0 0.4rem; }
+  .note .card.t h3 { color: var(--teal); }
+  .note .card p { margin: 0; font-size: 0.85rem; line-height: 1.5; }
+  .note .card code { font-family: var(--mono); font-size: 0.82em; background: var(--plate); border: 1px solid var(--line); padding: 0.03em 0.3em; border-radius: 4px; }
+  footer { max-width: 1200px; margin: 0 auto; padding: 1.4rem 5vw 3rem; font-family: var(--mono); font-size: 0.7rem; color: var(--graphite); border-top: 1px solid var(--line); }
+  footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="rule-top"></div>
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-7 4 14 2-9 2 4h2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="kicker"><b>relayd</b>message accountability</div>
+    </div>
+    <div class="masthead-meta"><div><em>The life of an ID</em></div><div>Read from live source</div></div>
+  </div>
+</header>
+
+<main>
+  <h1>One <em>msg_id</em>, minted once, carried the whole way</h1>
+  <p class="sub">A message's identity is stamped once at ingress and rides inside the message's <code>Meta</code> across every boundary. Each stage writes one append-only ledger line keyed on that id — so <code>grep &lt;msg_id&gt; relay-events.jsonl</code> reconstructs the message's entire life. The blue rail is the id's journey; the grey cards below it are the ledger lines it leaves behind.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <h2>The ID as a spine, the ledger as its shadow</h2>
+      <div class="legend">
+        <span class="spine"><i></i>id carried in Meta</span>
+        <span class="ledger"><i></i>ledger line (keyed on id)</span>
+        <span class="divert"><i></i>terminal outcome</span>
+        <span class="replyk"><i></i>reply — its own id</span>
+      </div>
+    </div>
+
+    <svg class="mid" viewBox="0 0 1120 470" role="img" aria-label="The lifecycle of a message ID in relayd. A blue spine runs left to right through five stages — ingress mint, gate chain, cross the socket, model turn, and reply — while append-only ledger lines (received, gate_blocked, injected or buffered, reply, send_ok or send_failed) branch off it, each keyed on the same msg_id. The reply gets its own new msg_id with an in_reply_to back-link, and a separate correlation id confirms live delivery.">
+      <defs>
+        <marker id="m-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+        <marker id="m-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker>
+      </defs>
+
+      <!-- the spine rail -->
+      <line class="spine-rail" x1="40" y1="150" x2="1080" y2="150" marker-end="url(#m-in)"/>
+
+      <!-- STAGE 1: mint -->
+      <g class="stage"><rect x="40" y="120" width="150" height="60" rx="8"/><text class="t" x="115" y="146">Ingress</text><text class="s" x="115" y="162">Telegram / Discord</text></g>
+      <text class="idtag" x="115" y="106">msg_id = a1b2c3… ✦ minted</text>
+
+      <!-- STAGE 2: gate chain -->
+      <g class="stage"><rect x="255" y="120" width="150" height="60" rx="8"/><text class="t" x="330" y="146">Gate chain</text><text class="s" x="330" y="162">in relayd</text></g>
+      <text class="idtag" x="330" y="106">rides in Meta →</text>
+
+      <!-- STAGE 3: socket -->
+      <g class="stage"><rect x="470" y="120" width="150" height="60" rx="8"/><text class="t" x="545" y="146">Cross the socket</text><text class="s" x="545" y="162">IPC Frame.Meta</text></g>
+      <text class="idtag" x="545" y="106">same id in the frame →</text>
+
+      <!-- STAGE 4: model -->
+      <g class="stage"><rect x="685" y="120" width="150" height="60" rx="8"/><text class="t" x="760" y="146">Model turn</text><text class="s" x="760" y="162">&lt;channel msg_id=…&gt;</text></g>
+      <text class="idtag" x="760" y="106">visible to the model →</text>
+
+      <!-- STAGE 5: reply (own id) -->
+      <g class="stage reply"><rect x="900" y="120" width="160" height="60" rx="8"/><text class="t" x="980" y="146">Reply</text><text class="s" x="980" y="162">gets a NEW msg_id</text></g>
+      <text class="idtag reply" x="980" y="106">msg_id = d4e5f6… ✦ new</text>
+
+      <!-- ledger stubs downward -->
+      <!-- received -->
+      <line class="stub" x1="115" y1="180" x2="115" y2="212"/>
+      <g class="ledger"><rect x="55" y="212" width="120" height="34" rx="5"/><text class="ev" x="63" y="228">received</text><text class="dsc" x="63" y="240">accepted inbound</text></g>
+
+      <!-- gate_blocked (divert) + injected/buffered -->
+      <line class="stub" x1="330" y1="180" x2="330" y2="212"/>
+      <g class="ledger divert"><rect x="230" y="212" width="120" height="34" rx="5"/><text class="ev" x="238" y="228">gate_blocked</text><text class="dsc" x="238" y="240">refused before model</text></g>
+      <line class="stub" x1="360" y1="246" x2="360" y2="272"/>
+      <g class="ledger"><rect x="300" y="272" width="130" height="34" rx="5"/><text class="ev" x="308" y="288">injected / buffered</text><text class="dsc" x="308" y="300">to session, or queued</text></g>
+
+      <!-- reply ledger + send_ok/failed -->
+      <line class="stub" x1="980" y1="180" x2="980" y2="212"/>
+      <g class="ledger"><rect x="920" y="212" width="120" height="34" rx="5"/><text class="ev" x="928" y="228">reply</text><text class="dsc" x="928" y="240">model produced output</text></g>
+      <line class="stub" x1="1000" y1="246" x2="1000" y2="272"/>
+      <g class="ledger"><rect x="905" y="272" width="150" height="34" rx="5"/><text class="ev" x="913" y="288">send_ok / send_failed</text><text class="dsc" x="913" y="300">frontend confirmed / not</text></g>
+
+      <!-- in_reply_to back-link from reply stage to received ledger -->
+      <path class="backlink" d="M 900 150 C 700 400, 300 360, 120 246" marker-end="url(#m-teal)"/>
+      <text class="backlink-label" x="470" y="392">in_reply_to → links the reply back to the inbound msg_id it answers</text>
+
+      <!-- correlation id (reply_id) confirming delivery: from reply stage to send_ok ledger -->
+      <path class="corr" d="M 1000 180 C 1080 240, 1080 250, 1055 289"/>
+      <text class="corr-label" x="1012" y="336" text-anchor="start">reply_id: a 2nd id,</text>
+      <text class="corr-label" x="1012" y="347" text-anchor="start">confirms THIS send</text>
+    </svg>
+  </div>
+
+  <div class="note">
+    <div class="card"><h3>Minted once, never re-issued</h3><p>Six random bytes at ingress (<code>NewMsgID</code>), stamped into <code>Meta</code>. Even the error fallback returns a weak-but-present id — an empty id "breaks traceability," so it's never allowed.</p></div>
+    <div class="card"><h3>Carried, not looked up</h3><p>The id lives <em>inside</em> the message's <code>Meta</code>, which flows into the IPC frame and becomes a <code>&lt;channel&gt;</code> tag attribute — so the message and its id can never be separated.</p></div>
+    <div class="card"><h3>Body never logged</h3><p>Every ledger line carries the id, chat/from ids, and a byte count — but not the content. The audit trail can be kept and shared without leaking conversation.</p></div>
+    <div class="card t"><h3>Two ids, two jobs</h3><p><code>msg_id</code> answers "what happened to this message?" forever; the reply's <code>reply_id</code> correlation id answers "did this one send succeed?" right now — refusing to report a false "sent."</p></div>
+  </div>
+</main>
+
+<footer><b>relayd</b> — traced from <code>internal/eventlog/eventlog.go</code>, <code>internal/endpoint/{telegram,discord,claude}</code>, <code>internal/relay/relay.go</code>, <code>internal/channel/channel.go</code> on the live tree. The one gap an id can't see — an answer composed but never sent — is caught out-of-band by the reply-drift Stop hook.</footer>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Salon — Rodin</title>
+<style>
+  :root {
+    --paper:#eceff4; --plate:#ffffff; --vellum:#f7f9fc; --line:#dce1ea; --rule-strong:#c3cad6;
+    --ink:#0e1116; --graphite:#59626f; --cobalt:#1633e0; --wash:#e7eaff; --ember:#f5451b; --ash:#ffeae3;
+    --lime:#c6f224; --teal:#00786a; --teal-soft:#e2f5f1;
+    --shadow:0 1px 0 rgba(14,17,22,.04),0 2px 4px rgba(14,17,22,.03),0 24px 48px -20px rgba(22,51,224,.16);
+    --display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,ui-serif,serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,"Cascadia Mono","Roboto Mono",Consolas,monospace;
+    --ease:cubic-bezier(.16,.84,.44,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;color:var(--ink);font-family:var(--sans);overflow:hidden;
+    background:linear-gradient(to right,rgba(22,51,224,.045) 1px,transparent 1px) 0 0/32px 32px,
+      linear-gradient(to bottom,rgba(22,51,224,.045) 1px,transparent 1px) 0 0/32px 32px,var(--paper);}
+  .deck{height:100vh;display:flex;flex-direction:column;}
+  /* top rule */
+  .rule-top{height:3px;width:100%;flex:none;
+    background:linear-gradient(to right,var(--cobalt) 0 18%,var(--lime) 18% 25%,var(--line) 25% 100%);}
+  /* stage */
+  .stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:2.4vh 6vw;min-height:0;}
+  .slide{position:absolute;inset:2.4vh 6vw;display:none;flex-direction:column;justify-content:center;
+    opacity:0;transition:opacity 380ms var(--ease);}
+  /* slide enters with a gentle zoom-in + fade */
+  .slide.active{display:flex;opacity:1;animation:zoomin 560ms var(--ease) both;}
+  @keyframes zoomin{from{opacity:0;transform:scale(.955);}to{opacity:1;transform:none;}}
+  /* waterfall: each top-level element of the active slide fades up in sequence */
+  .slide.active > *{animation:wf 560ms var(--ease) both;}
+  .slide.active > *:nth-child(1){animation-delay:70ms;}
+  .slide.active > *:nth-child(2){animation-delay:170ms;}
+  .slide.active > *:nth-child(3){animation-delay:280ms;}
+  .slide.active > *:nth-child(4){animation-delay:390ms;}
+  .slide.active > *:nth-child(5){animation-delay:500ms;}
+  @keyframes wf{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+  /* nested waterfalls: option cards and the principle chips cascade after their container */
+  .slide.active ul.opts li{animation:wf 480ms var(--ease) both;}
+  .slide.active ul.opts li:nth-child(1){animation-delay:340ms;}
+  .slide.active ul.opts li:nth-child(2){animation-delay:450ms;}
+  .slide.active ul.opts li:nth-child(3){animation-delay:560ms;}
+  .slide.active .princ .step{animation:wf 440ms var(--ease) both;}
+  .slide.active .princ .step:nth-child(1){animation-delay:360ms;}
+  .slide.active .princ .step:nth-child(3){animation-delay:450ms;}
+  .slide.active .princ .step:nth-child(5){animation-delay:540ms;}
+  .slide.active .princ .step:nth-child(7){animation-delay:630ms;}
+  .slide.active .princ .step:nth-child(9){animation-delay:720ms;}
+  .slide.active .princ .arrow{animation:wf 440ms var(--ease) both;animation-delay:.5s;}
+  /* the diagram itself gets a soft zoom-in once its figure has arrived */
+  .slide.active figure svg.d{animation:svgpop 640ms var(--ease) both;animation-delay:340ms;transform-origin:center;}
+  @keyframes svgpop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cobalt);margin:0 0 1rem;}
+  h1{font-family:var(--display);font-weight:400;letter-spacing:-.025em;line-height:1.03;margin:0;}
+  .slide h2{font-family:var(--display);font-weight:400;letter-spacing:-.02em;line-height:1.06;
+    font-size:clamp(1.9rem,3.8vw,3rem);margin:0;}
+  .slide h2 em{font-style:italic;color:var(--cobalt);}
+  .lede{font-size:clamp(1.05rem,1.7vw,1.35rem);line-height:1.5;color:var(--graphite);max-width:52rem;margin:0;}
+  .lede strong{color:var(--ink);font-weight:600;}
+  .big-quote{font-family:var(--display);font-style:normal;font-size:clamp(1.8rem,4vw,3rem);line-height:1.15;
+    letter-spacing:-.02em;color:var(--ink);max-width:40rem;border-left:3px solid var(--lime);padding-left:1.4rem;margin:0;}
+  /* red warning block (the caveat slide earns real text) */
+  .warn{max-width:46rem;background:var(--ash);border:1px solid var(--ember);border-left:6px solid var(--ember);
+    border-radius:0 10px 10px 0;padding:1.5rem 1.8rem;}
+  .warn-lead{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,3.6vw,2.6rem);color:var(--ember);
+    margin:0 0 .9rem;line-height:1.08;letter-spacing:-.01em;}
+  .warn p{font-size:clamp(1rem,1.5vw,1.22rem);line-height:1.55;color:var(--ink);margin:0 0 .8rem;}
+  .warn p:last-child{margin-bottom:0;}
+  .warn-punch{border-top:1px solid var(--ember);padding-top:.9rem;margin-top:1rem;font-weight:600;color:var(--ink);}
+  ul.opts{list-style:none;padding:0;margin:1.6rem 0 0;display:flex;flex-direction:column;gap:.9rem;max-width:56rem;}
+  ul.opts li{background:var(--vellum);border:1px solid var(--line);border-left:3px solid var(--rule-strong);
+    padding:.9rem 1.1rem;border-radius:0 8px 8px 0;}
+  ul.opts li b{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--cobalt);display:block;margin-bottom:.25rem;}
+  ul.opts li span{font-size:1.02rem;line-height:1.5;color:var(--ink);}
+  ul.opts li.pick{border-left-color:var(--teal);}
+  ul.opts li.pick b{color:var(--teal);}
+  .princ{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:1.8rem;font-family:var(--mono);font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;color:var(--graphite);}
+  .princ .step{background:var(--wash);border:1px solid var(--cobalt);color:var(--cobalt);padding:.4rem .8rem;border-radius:999px;}
+  .princ .arrow{color:var(--rule-strong);}
+  figure{margin:1.4rem 0 0;}
+  svg.d{width:100%;height:auto;max-height:56vh;display:block;overflow:visible;}
+  figcaption{margin-top:.8rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;color:var(--graphite);}
+  .title-meta{margin-top:1.6rem;font-family:var(--mono);font-size:.8rem;letter-spacing:.06em;color:var(--graphite);line-height:1.7;}
+  .title-meta em{font-style:normal;color:var(--ink);}
+  .title-sub{font-size:clamp(1.15rem,1.9vw,1.5rem);line-height:1.45;color:var(--graphite);max-width:40rem;margin:1.4rem 0 0;}
+  .title-mark{display:block;width:34px;height:34px;background:var(--cobalt);clip-path:polygon(0 0,100% 0,100% 72%,72% 100%,0 100%);margin:0 0 1.5rem;}
+  /* services grid (finale) */
+  .svc-wrap{margin-top:1.1rem;}
+  .svc-base{font-family:var(--mono);font-size:.82rem;color:var(--graphite);margin:0 0 .9rem;}
+  .svc-base b{color:var(--cobalt);font-weight:600;}
+  .svc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem 1.6rem;max-width:66rem;}
+  .svc{border-left:2px solid var(--cobalt);padding:.15rem 0 .15rem .7rem;}
+  .svc.ext{border-left-color:var(--teal);}
+  .svc.term{border-left-color:var(--ember);}
+  .svc .n{font-weight:600;font-size:1rem;color:var(--ink);line-height:1.2;}
+  .svc .l{display:block;font-family:var(--mono);font-size:.75rem;color:var(--cobalt);text-decoration:none;margin-top:.12rem;word-break:break-all;}
+  .svc.ext .l{color:var(--teal);} .svc.term .l{color:var(--ember);}
+  .svc .l:hover{text-decoration:underline;}
+  /* diagram primitives */
+  .node rect{fill:var(--vellum);stroke:var(--rule-strong);stroke-width:1.4;}
+  .node.cobalt rect{fill:#fbfcff;stroke:var(--cobalt);stroke-width:1.6;}
+  .node.term rect{fill:var(--teal-soft);stroke:var(--teal);stroke-width:1.6;}
+  .node .t{font-family:var(--sans);font-weight:650;font-size:13px;fill:var(--ink);text-anchor:middle;}
+  .node.term .t{fill:var(--teal);} .node.cobalt .t{fill:var(--cobalt);}
+  .node .s{font-family:var(--mono);font-size:8.5px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
+  .flow{stroke:var(--cobalt);stroke-width:1.8;fill:none;}
+  .flow.soft{stroke:var(--rule-strong);}
+  .flow-l{font-family:var(--mono);font-size:9px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
+  /* footer nav */
+  .nav{flex:none;display:flex;align-items:center;gap:1rem;padding:.7rem 6vw;border-top:1px solid var(--line);
+    background:rgba(255,255,255,.82);backdrop-filter:blur(8px);}
+  .brand{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite);}
+  .brand .mk{width:18px;height:18px;background:var(--cobalt);clip-path:polygon(0 0,100% 0,100% 72%,72% 100%,0 100%);display:inline-block;}
+  .dots{display:flex;gap:.4rem;margin:0 auto;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:background .15s,transform .15s;}
+  .dot[aria-current=true]{background:var(--cobalt);transform:scale(1.35);}
+  .dot:focus-visible{outline:2px solid var(--cobalt);outline-offset:3px;}
+  button.pg{appearance:none;border:1px solid var(--rule-strong);background:var(--vellum);color:var(--ink);
+    font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;padding:.45rem .8rem;border-radius:8px;cursor:pointer;transition:all .15s var(--ease);}
+  button.pg:hover:not(:disabled){border-color:var(--cobalt);color:var(--cobalt);transform:translateY(-1px);}
+  button.pg:disabled{opacity:.3;cursor:default;}
+  button.pg.live{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);}
+  .counter{font-family:var(--mono);font-size:.72rem;color:var(--graphite);font-variant-numeric:tabular-nums;min-width:3.2rem;text-align:right;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}.slide.active,.slide.active>*,.slide.active .opts li,.slide.active .princ .step,.slide.active figure svg.d{opacity:1!important;transform:none!important;}}
+  /* speaker notes — hidden from the projected slide face; shown only when notes mode is on */
+  .notes{display:none;}
+  #notesPanel{display:none;flex:none;padding:.9rem 6vw 1rem;border-top:2px solid var(--lime);
+    background:#0e1116;color:#e7eaff;font-family:var(--mono);font-size:.92rem;line-height:1.5;max-height:34vh;overflow:auto;}
+  #notesPanel .nh{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);margin:0 0 .5rem;}
+  #notesPanel ul{margin:0;padding-left:1.1rem;}
+  #notesPanel li{margin:.24rem 0;}
+  #notesPanel b{color:var(--lime);font-weight:600;}
+  body.notes-on #notesPanel{display:block;}
+  .hint{position:fixed;bottom:.5rem;right:.7rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--graphite);opacity:.55;pointer-events:none;}
+  /* audience pop-out: clean slide face only, no nav / notes / hint */
+  body.audience .nav,body.audience #notesPanel,body.audience .hint{display:none!important;}
+  /* phones: bigger tap targets, swipe hint, drop desktop-only chrome */
+  @media (max-width:640px){
+    .nav{gap:.5rem;padding:.55rem 4vw;flex-wrap:wrap;justify-content:center;}
+    .brand{display:none;}
+    #popout{display:none;}
+    button.pg{padding:.6rem 1.1rem;font-size:.82rem;flex:1 1 auto;text-align:center;}
+    .dots{order:3;flex-basis:100%;justify-content:center;margin:.35rem 0 0;}
+    .counter{min-width:auto;}
+    .hint{display:none;}
+    .stage{padding:2vh 5vw;}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="rule-top"></div>
+  <div class="stage" id="stage">
+
+    <!-- 1 · TITLE -->
+    <section class="slide active">
+      <span class="title-mark" aria-hidden="true"></span>
+      <p class="eyebrow">Systems Thinking Data Salon</p>
+      <h1 style="font-size:clamp(2.2rem,5.6vw,4.1rem);max-width:16ch;">Building a Home Control Plane From Parts</h1>
+      <p class="title-sub">How a chat relay and an old laptop became central control for the house.</p>
+      <div class="title-meta">Jean Haley — Site Reliability Engineer &nbsp;·&nbsp; a headless AI agent on a dedicated laptop</div>
+      <aside class="notes"><ul>
+        <li>This is a talk about a recent project I put together over a weekend, and how one component of it grew to become something that really surprised me.</li>
+        <li>When I begin work on a new project, my first goal is to define a clear and singular goal that makes up a Minimum Viable Solution to either a problem or an itch.</li>
+        <li>I want to put into words exactly what it is I want to accomplish, so it doesn't exist as a nebulous idea in my head.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 2 · THE TASK / MVP BOUNDS -->
+    <section class="slide">
+      <p class="eyebrow">Step one: define the MVP bounds</p>
+      <p class="big-quote">Detach a work session from my physical location and device.</p>
+      <aside class="notes"><ul>
+        <li>In this case, my task is to detach a work session from my physical location and device.</li>
+        <li>I want to work from any location or device, with my interaction, the planning phase, and the execution decoupled from my device.</li>
+        <li>Get up, close the laptop lid, and walk away. Keep doing my work from my phone, through a secure chat interface.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 4 · INITIAL CONCEPT DIAGRAM -->
+    <section class="slide">
+      <p class="eyebrow">How I modeled it, and the principle underneath</p>
+      <h2>Model it first, and give every part its own concern.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 200" role="img" aria-label="Initial concept: a chat client sends to a backend server, to a message relay, to the Claude Code backend.">
+          <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node"><rect x="10" y="70" width="200" height="60" rx="9"/><text class="t" x="110" y="98">Chat client</text><text class="s" x="110" y="115">any device</text></g>
+          <line class="flow" x1="210" y1="100" x2="285" y2="100" marker-end="url(#a1)"/>
+          <g class="node"><rect x="290" y="70" width="200" height="60" rx="9"/><text class="t" x="390" y="105">Backend server</text></g>
+          <line class="flow" x1="490" y1="100" x2="565" y2="100" marker-end="url(#a1)"/>
+          <g class="node cobalt"><rect x="570" y="70" width="200" height="60" rx="9"/><text class="t" x="670" y="105">Message relay</text></g>
+          <line class="flow" x1="770" y1="100" x2="845" y2="100" marker-end="url(#a1)"/>
+          <g class="node term"><rect x="850" y="70" width="220" height="60" rx="9"/><text class="t" x="960" y="98">Claude Code</text><text class="s" x="960" y="115">the model backend</text></g>
+        </svg>
+        <figcaption>Chat client → backend server → message relay → Claude Code backend.</figcaption>
+      </figure>
+      <div class="princ">
+        <span class="step">separate concerns</span><span class="arrow">→</span>
+        <span class="step">clean interfaces</span><span class="arrow">→</span>
+        <span class="step">extensible</span><span class="arrow">→</span>
+        <span class="step">maintainable</span><span class="arrow">→</span>
+        <span class="step">scalable</span>
+      </div>
+      <aside class="notes"><ul>
+        <li>Several pre-existing solutions exist, and each solves a different problem.</li>
+        <li>Anthropic's Remote Control ties me to one app.</li>
+        <li>I don't like not knowing how OpenClaw works, and I don't really like engaging with it. The vibes are off.</li>
+        <li>Mostly, I wanted to build this myself and own the whole pipeline. So I first modeled it: chat client to backend server to message relay to Claude Code backend.</li>
+        <li>My design philosophy is to decompose a system into its separate components, each with its own area of concern.</li>
+        <li>That lets me build interfaces between the parts, which makes the system extensible and easier to maintain and update. In my opinion that's the first foundational step toward a system that can scale.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 7 · CHANNELS: how they work -->
+    <section class="slide">
+      <p class="eyebrow">Claude Code's <span style="text-transform:none;font-family:var(--mono)">channels</span> (beta)</p>
+      <h2>The relay-shim uses a channel to talk to a running session, both directions.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 300" role="img" aria-label="Two tracks. Inbound (top): chat client to relayd to relay-shim, which injects the message into Claude Code as a channel notification. Outbound (bottom): Claude Code answers through the channel's reply tool, back through the shim and relayd to the chat client. The channel is used both directions; relayd handles the chat-client hop on both ends.">
+          <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="a2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker></defs>
+          <g class="node"><rect x="30" y="95" width="150" height="90" rx="9"/><text class="t" x="105" y="135">Chat client</text><text class="s" x="105" y="152">Telegram · Discord</text></g>
+          <g class="node cobalt"><rect x="290" y="95" width="150" height="90" rx="9"/><text class="t" x="365" y="140">relayd</text></g>
+          <g class="node"><rect x="550" y="95" width="170" height="90" rx="9"/><text class="t" x="635" y="132" style="font-size:12.5px;">relay-shim</text><text class="s" x="635" y="150">the channel</text></g>
+          <g class="node term"><rect x="830" y="95" width="220" height="90" rx="10"/><text class="t" x="940" y="132">Claude Code</text><text class="s" x="940" y="150">one live session</text></g>
+          <text class="flow-l" x="30" y="66" style="text-anchor:start;font-weight:700;fill:#1633e0;letter-spacing:.1em;">INBOUND — message in</text>
+          <line class="flow" x1="180" y1="112" x2="288" y2="112" marker-end="url(#a2)"/>
+          <line class="flow" x1="440" y1="112" x2="548" y2="112" marker-end="url(#a2)"/>
+          <line class="flow" x1="720" y1="112" x2="828" y2="112" marker-end="url(#a2)"/>
+          <text class="flow-l" x="775" y="84">channel: inject as notification</text>
+          <line class="flow soft" x1="828" y1="168" x2="722" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <line class="flow soft" x1="548" y1="168" x2="442" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <line class="flow soft" x1="288" y1="168" x2="182" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <text class="flow-l" x="775" y="202" fill="#00786a">channel: reply tool</text>
+          <text class="flow-l" x="365" y="202" fill="#00786a">last-mile send to the chat app</text>
+          <text class="flow-l" x="30" y="216" style="text-anchor:start;font-weight:700;fill:#00786a;letter-spacing:.1em;">OUTBOUND — reply out</text>
+        </svg>
+        <figcaption>Same channel, both directions. relayd bridges the chat client on each end.</figcaption>
+      </figure>
+      <div class="princ">
+        <span class="step">relay delivers a message</span><span class="arrow">→</span>
+        <span class="step">channel injects it</span><span class="arrow">→</span>
+        <span class="step">model reads &amp; decides</span><span class="arrow">→</span>
+        <span class="step">reply tool sends back</span>
+      </div>
+      <aside class="notes"><ul>
+        <li>A research pass on how to implement this revealed a new beta component in Claude Code I hadn't known about: channels.</li>
+        <li>This was perfect. It passes a message to a running Claude session, triggers a response, and keeps a long-running session going.</li>
+        <li>No need to build my own weird harness or maintain my own context. I could use a running instance of Claude Code to manage its own session.</li>
+        <li>All I had to do was introduce it to the relay and give it proper instructions.</li>
+        <li>Both directions run over the channel: inbound injects the message as a notification, outbound comes back through the channel's reply tool. relayd does the last-mile send to the chat app.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 9 · FIRST IMPLEMENTATION: relayd -->
+    <section class="slide">
+      <p class="eyebrow">The first implementation</p>
+      <h2>relayd — day one.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 240" role="img" aria-label="First relayd implementation: Telegram to relayd (a commands gate and a budget/rate gate) to the Claude Code backend, with the reply retracing the path.">
+          <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="a3h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker></defs>
+          <g class="node"><rect x="20" y="90" width="150" height="60" rx="9"/><text class="t" x="95" y="118">Telegram</text><text class="s" x="95" y="135">DM</text></g>
+          <line class="flow" x1="170" y1="120" x2="238" y2="120" marker-end="url(#a3)"/>
+          <g class="node cobalt"><rect x="240" y="55" width="420" height="140" rx="12"/><text class="t" x="450" y="80" fill="#1633e0" style="font-size:14px;">relayd</text></g>
+          <g class="node"><rect x="270" y="105" width="170" height="50" rx="7"/><text class="t" x="355" y="128" style="font-size:11.5px;">commands?</text><text class="s" x="355" y="143">/help /rate /pause</text></g>
+          <line class="flow" x1="440" y1="130" x2="468" y2="130" marker-end="url(#a3)"/>
+          <g class="node"><rect x="470" y="105" width="170" height="50" rx="7"/><text class="t" x="555" y="128" style="font-size:11.5px;">budget / rate gate</text><text class="s" x="555" y="143">circuit breaker</text></g>
+          <line class="flow" style="stroke:#f5451b;" x1="660" y1="120" x2="728" y2="120" marker-end="url(#a3h)"/>
+          <g class="node term"><rect x="730" y="90" width="160" height="60" rx="9"/><text class="t" x="810" y="118">Claude Code</text><text class="s" x="810" y="135">Sonnet</text></g>
+          <path class="flow soft" d="M 810 150 L 810 210 L 95 210 L 95 150" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+          <text class="flow-l" x="450" y="226">the reply retraces the path back to the user</text>
+        </svg>
+        <figcaption>A Telegram router for a Claude Code backend: a commands gate, a budget/rate gate, and nothing else yet.</figcaption>
+      </figure>
+      <aside class="notes"><ul>
+        <li>Using channels as an instruction set, we built out the whole relay quickly. We called it relayd, and it worked exactly as I wanted.</li>
+        <li>The first edition was a simple Telegram bot. I'd used a Telegram bot to track a hacked Instagram account and it was phenomenal and very straightforward, so it became the hammer and this project was the nail.</li>
+        <li>Day one is just two gates, a commands gate and a budget/rate gate. Every later piece arrived because a real problem asked for it.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 11 · AUTH LAYER -->
+    <section class="slide">
+      <p class="eyebrow">The first authentication layer</p>
+      <h2>Nothing reaches the model until it's approved or denied.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 250" role="img" aria-label="Authentication layer: an inbound message hits the relay gate keyed on the sender's Telegram ID. Approved senders pass to the model. Unknown senders are queued for approval and an admin approves or denies them. Admin and regular user are distinct roles.">
+          <defs><marker id="au" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="aug" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker>
+          <marker id="aur" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker></defs>
+          <g class="node"><rect x="20" y="95" width="150" height="60" rx="9"/><text class="t" x="95" y="122">Message</text><text class="s" x="95" y="139">+ sender ID</text></g>
+          <line class="flow" x1="170" y1="125" x2="238" y2="125" marker-end="url(#au)"/>
+          <g class="node cobalt"><rect x="240" y="90" width="200" height="70" rx="9"/><text class="t" x="340" y="118" fill="#1633e0">relay gate</text><text class="s" x="340" y="136">approved? denied? unknown?</text></g>
+          <line class="flow" style="stroke:#00786a" x1="440" y1="112" x2="700" y2="112" marker-end="url(#aug)"/>
+          <text class="flow-l" x="565" y="104" fill="#00786a">approved</text>
+          <g class="node term"><rect x="705" y="82" width="180" height="60" rx="9"/><text class="t" x="795" y="115">Model backend</text></g>
+          <line class="flow" style="stroke:#f5451b" x1="440" y1="140" x2="560" y2="185" marker-end="url(#aur)"/>
+          <text class="flow-l" x="470" y="182" fill="#c8431e">unknown → queued</text>
+          <g class="node"><rect x="565" y="175" width="180" height="55" rx="9"/><text class="t" x="655" y="198" style="font-size:12px;">admin approves</text><text class="s" x="655" y="214">or denies</text></g>
+          <line class="flow" x1="745" y1="195" x2="795" y2="195" marker-end="url(#au)"/>
+          <path class="flow" d="M 795 195 L 795 142" marker-end="url(#au)" stroke-dasharray="4 3"/>
+        </svg>
+        <figcaption>Every message is gated at the relay before the model sees anything.</figcaption>
+      </figure>
+      <aside class="notes"><ul>
+        <li>I almost immediately became aware of security implications from my narrow spec. It needed authentication.</li>
+        <li>This first iteration used Telegram, because Telegram is what I knew. But there's no way to pass credentials downstream to the relay, so I can't rely on Telegram to validate a user.</li>
+        <li>Telegram does send a unique ID, so I keep a list of approved and denied users and block all incoming messages at the relay before anything reaches the model.</li>
+        <li>That gave a distinction between an admin user and a regular user, which made me realize this could be multi-tenanted.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 12 · COLLABORATIVE SPACE -->
+    <section class="slide">
+      <p class="eyebrow">Accidentally multi-tenanted</p>
+      <h2>Out of nowhere, several people were using one Claude session at once.</h2>
+      <aside class="notes"><ul>
+        <li>I reached out to a number of friends and had them connect, validating the approval process and fixing holes that came up in practice.</li>
+        <li>Out of nowhere I had multiple users on my Claude Code session at the same time. It became an odd collaborative space.</li>
+        <li>Claude handles multiple users flawlessly. It knows who's talking and responds through the correct channel, acknowledges my account as the admin, and will actually narc on a user who tries to get sensitive information.</li>
+        <li>To this day several people hold discussions and learning sessions with it, all at the same time.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 13 · CAVEAT -->
+    <section class="slide">
+      <p class="eyebrow" style="color:var(--ember)">An honest warning</p>
+      <div class="warn">
+        <p class="warn-lead">This is not safe.</p>
+        <p>I only share this space with close friends I've known and trusted for years. The model is remarkably good at knowing what lines not to cross. But leaning on a model for security will eventually break. Every model, given enough time, is susceptible to social engineering.</p>
+        <p class="warn-punch">Gate a stochastic system behind a deterministic boundary. Don't run an instance like this without understanding that risk.</p>
+      </div>
+      <aside class="notes"><ul>
+        <li>A note: this is not safe. The people I share this space with are close friends I've known and trusted for years.</li>
+        <li>The model has proven very good at knowing what bounds not to cross, but relying on a model for security like this will lead to problems.</li>
+        <li>All models, given enough time, are susceptible to social engineering. I wouldn't suggest anyone run a Claude instance like this without knowing the risks.</li>
+        <li>It's extremely important to gate a stochastic system behind a deterministic boundary.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 14 · SCHEDULER -->
+    <section class="slide">
+      <p class="eyebrow">Giving it a little agency</p>
+      <h2>I was missing a way for the model to act on its own.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 220" role="img" aria-label="The scheduler: cron and one-off tasks fire at a set time, injecting a wake-up into the model, which works on the task. The model can also schedule itself.">
+          <defs><marker id="sc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node cobalt"><rect x="30" y="80" width="200" height="70" rx="9"/><text class="t" x="130" y="108" fill="#1633e0">Scheduler</text><text class="s" x="130" y="126">cron · one-off tasks</text></g>
+          <line class="flow" x1="230" y1="115" x2="400" y2="115" marker-end="url(#sc)"/>
+          <text class="flow-l" x="315" y="107">wakes at a set time</text>
+          <g class="node term"><rect x="405" y="75" width="230" height="80" rx="10"/><text class="t" x="520" y="108">Running model</text><text class="s" x="520" y="126">works the task, then continues</text></g>
+          <path class="flow" d="M 635 130 C 760 175, 760 60, 635 95" marker-end="url(#sc)"/>
+          <text class="flow-l" x="772" y="112" style="font-size:8.5px;text-anchor:start">the model can</text>
+          <text class="flow-l" x="772" y="124" style="font-size:8.5px;text-anchor:start">schedule itself</text>
+        </svg>
+        <figcaption>I schedule events and one-off tasks. The model can also schedule itself.</figcaption>
+      </figure>
+      <aside class="notes"><ul>
+        <li>The dynamic had shifted. I'm now sending messages back and forth with several users, and what I was missing is a way for the model to have some self-determinism, a pseudo-agency.</li>
+        <li>OpenClaw has the concept of a heartbeat that keeps an agent pursuing its own goals. I don't know exactly how it works, but I assume it's a scheduler pinging the model with its context, probably similar to how dreaming works.</li>
+        <li>So I had it create its own scheduler. I can schedule events and one-off tasks, and the model can create its own schedule: if something needs handling later, it sets its own wake-up.</li>
+        <li>That added another dimension, far closer to a true assistant than any of these machines I've used. It's funny how one simple addition can alter the whole dynamic.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 17 · NERVOUS SYSTEM -->
+    <section class="slide">
+      <p class="eyebrow">The machine, its senses, and a nervous system</p>
+      <h2>I looped our alerts back to the model, so that it can heal itself.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 200" role="img" aria-label="Self-healing: a metric or sensor triggers a Grafana alert, which routes through the relay into the model; the model investigates, fixes the issue, and notifies Jean.">
+          <defs><marker id="nv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node"><rect x="20" y="70" width="170" height="60" rx="9"/><text class="t" x="105" y="96" style="font-size:12px;">metric / sensor</text><text class="s" x="105" y="113">CPU · memory · disk</text></g>
+          <line class="flow" x1="190" y1="100" x2="255" y2="100" marker-end="url(#nv)"/>
+          <g class="node"><rect x="258" y="70" width="150" height="60" rx="9"/><text class="t" x="333" y="104">Grafana alert</text></g>
+          <line class="flow" x1="408" y1="100" x2="473" y2="100" marker-end="url(#nv)"/>
+          <g class="node cobalt"><rect x="476" y="70" width="130" height="60" rx="9"/><text class="t" x="541" y="104" fill="#1633e0">relay</text></g>
+          <line class="flow" x1="606" y1="100" x2="671" y2="100" marker-end="url(#nv)"/>
+          <g class="node term"><rect x="674" y="60" width="230" height="80" rx="10"/><text class="t" x="789" y="92">Model</text><text class="s" x="789" y="110">investigates · fixes</text><text class="s" x="789" y="124">then tells me</text></g>
+        </svg>
+        <figcaption>Grafana alerts through the relay become something like a nervous system. The model can self-heal.</figcaption>
+      </figure>
+      <aside class="notes"><ul>
+        <li>A choice I made when I built this: I have a large collection of ancient ThinkPads I stress-bought and repaired off eBay. They're perfect home-lab boxes, more powerful than a Raspberry Pi at about the same cost, if you know how to wipe the BIOS admin password.</li>
+        <li>So I put a bare-bones Linux install on one and let the model take full control: strip the unnecessary software, keep a minimal UI, SSH ingress only through Tailscale, a VPN on WireGuard. One controlled egress point.</li>
+        <li>As captain of its own ship, the model can use every sense as a resource: scan local traffic, reach into the router, set up ad-hoc ad blockers.</li>
+        <li>That led to an observability stack: Prometheus for metrics, Loki for logs, Grafana to aggregate it into dashboards and alerts. It can also pull public data like weather.</li>
+        <li>Passing Grafana's alerts through the relay turned them into a pseudo-nervous system. The model is aware of its own vessel and can self-heal on CPU, memory, or disk. My favorite example: a Bluetooth sensor reads a home thermometer, I compare indoor to outdoor, and it tells me when it's cooler outside so I know to open the windows.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 19 · THE WHOLE SYSTEM (bird's-eye) -->
+    <section class="slide">
+      <p class="eyebrow">The whole system, now</p>
+      <h2>A persistent Claude Code session running on its own computer.</h2>
+      <figure>
+        <svg class="d" viewBox="0 0 1080 380" role="img" aria-label="Bird's-eye view of the system. Chat clients (Telegram and Discord) enter through relayd's gate. relayd feeds one live Claude Code session at the center of the vessel, the ThinkPad. Around the model inside the vessel sit the scheduler, the observability stack (Prometheus, Loki, Grafana), the k3s cluster, and BLE and network sensors, all connected to the model. The whole vessel sits on a single Tailscale egress built on WireGuard.">
+          <defs><marker id="be" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="bet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker></defs>
+
+          <!-- ingress: chat clients -> relayd -->
+          <g class="node"><rect x="16" y="150" width="150" height="70" rx="9"/><text class="t" x="91" y="180" style="font-size:12px;">Chat clients</text><text class="s" x="91" y="197">Telegram · Discord</text></g>
+          <line class="flow" x1="166" y1="185" x2="214" y2="185" marker-end="url(#be)"/>
+          <g class="node cobalt"><rect x="216" y="150" width="150" height="70" rx="9"/><text class="t" x="291" y="180" fill="#1633e0" style="font-size:12.5px;">relayd</text><text class="s" x="291" y="197">gate · auth · budget</text></g>
+          <line class="flow" x1="366" y1="185" x2="430" y2="185" marker-end="url(#be)"/>
+
+          <!-- vessel container -->
+          <rect x="432" y="34" width="632" height="286" rx="14" fill="#fbfcff" stroke="#1633e0" stroke-width="1.6"/>
+          <text x="452" y="58" style="font-family:monospace;font-size:10px;letter-spacing:.12em;fill:#1633e0;">RODIN · THINKPAD T480 — THE VESSEL</text>
+
+          <!-- model at center -->
+          <g class="node term"><rect x="628" y="150" width="240" height="72" rx="10"/><text class="t" x="748" y="182">Claude Code</text><text class="s" x="748" y="200">one live session</text></g>
+
+          <!-- satellites -->
+          <g class="node"><rect x="456" y="78" width="180" height="52" rx="8"/><text class="t" x="546" y="100" style="font-size:11.5px;">Scheduler</text><text class="s" x="546" y="116">cron · self-wake</text></g>
+          <g class="node"><rect x="860" y="78" width="188" height="52" rx="8"/><text class="t" x="954" y="100" style="font-size:11.5px;">Observability</text><text class="s" x="954" y="116">Prometheus · Loki · Grafana</text></g>
+          <g class="node"><rect x="456" y="240" width="180" height="52" rx="8"/><text class="t" x="546" y="262" style="font-size:11.5px;">k3s cluster</text><text class="s" x="546" y="278">most services</text></g>
+          <g class="node"><rect x="860" y="240" width="188" height="52" rx="8"/><text class="t" x="954" y="262" style="font-size:11.5px;">Sensors</text><text class="s" x="954" y="278">BLE · network · router</text></g>
+
+          <!-- connectors model <-> satellites -->
+          <line class="flow soft" x1="636" y1="150" x2="600" y2="120" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="118" x2="820" y2="152" marker-end="url(#bet)"/>
+          <line class="flow soft" x1="636" y1="220" x2="600" y2="252" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="252" x2="820" y2="220" marker-end="url(#bet)"/>
+
+          <!-- tailscale egress bar -->
+          <rect x="432" y="332" width="632" height="34" rx="8" fill="#e2f5f1" stroke="#00786a" stroke-width="1.4"/>
+          <text x="748" y="354" text-anchor="middle" style="font-family:monospace;font-size:10.5px;letter-spacing:.06em;fill:#00786a;">Tailscale — single controlled egress · WireGuard</text>
+        </svg>
+        <figcaption>Chat in through relayd; one session at the center; scheduler, observability, k3s and sensors around it; everything behind one Tailscale egress.</figcaption>
+      </figure>
+      <aside class="notes"><ul>
+        <li>This went from me developing a simple message relay so I could work remotely, to having a central control for a smart home.</li>
+        <li>The birds-eye of what it all is now: chat clients in through relayd's gate, one live Claude Code session at the center, and around it the scheduler, observability, the k3s cluster, and sensors, all wired to the model.</li>
+        <li>Everything sits behind one controlled Tailscale egress.</li>
+      </ul></aside>
+    </section>
+
+    <!-- 20 · SERVICES + LINKS (finale) -->
+    <section class="slide">
+      <p class="eyebrow">Everything it runs</p>
+      <h2>Tools it's built and hosts, all over the tailnet.</h2>
+      <div class="svc-wrap">
+        <p class="svc-base">Web tools, base <b></b></p>
+        <div class="svc-grid">
+          <div class="svc"><span class="n">VS Code</span><a class="l" href="/">/</a></div>
+          <div class="svc"><span class="n">Daily newspaper</span><a class="l" href="/tools/newspaper">/news</a></div>
+          <div class="svc"><span class="n">Email search</span><a class="l" href="/tools/search">/search</a></div>
+          <div class="svc"><span class="n">Grafana dashboards</span><a class="l" href="/tools/grafana">/grafana</a></div>
+          <div class="svc"><span class="n">Qdrant browser</span><a class="l" href="/tools/qdrant">/qdrant</a></div>
+          <div class="svc"><span class="n">TV remote</span><a class="l" href="/tools/tv">/tv</a></div>
+          <div class="svc"><span class="n">Glucose tracker</span><a class="l" href="/tools/glucose">/glucose</a></div>
+          <div class="svc"><span class="n">Guided tour</span><a class="l" href="/tour">/tour</a></div>
+          <div class="svc"><span class="n">This deck</span><a class="l" href="/talk">/talk</a></div>
+          <div class="svc ext"><span class="n">Mastodon</span><a class="l" href="https://mastodon.stochastic-engine.com">mastodon.stochastic-engine.com</a></div>
+          <div class="svc term"><span class="n">Email workspace (TUI)</span><span class="l">ssh -p 2229 </span></div>
+          <div class="svc term"><span class="n">BBS (gobbs)</span><span class="l">ssh -p 2227 </span></div>
+        </div>
+      </div>
+      <aside class="notes"><ul>
+        <li>Having the ability to capture packets from the router and port-scan local devices, I found an open port on my TV and used it to build a remote-control frontend. I can now control the TV from my phone if I lose the remote.</li>
+        <li>Future plans: smart lights over an open API with custom interfaces; connecting other devices into a distributed k8s cluster and letting the model connect to the control plane. There's already a local k8s cluster running most of our services, including a personal Mastodon instance.</li>
+        <li>Here's a list of the services built so far, all reachable over the tailnet.</li>
+      </ul></aside>
+    </section>
+
+  </div>
+
+  <div id="notesPanel"><p class="nh">Speaker notes</p><div id="notesBody"></div></div>
+  <span class="hint" id="hint">N: notes · P: pop out slide</span>
+
+  <div class="nav">
+    <span class="brand"><span class="mk"></span> Rodin — Data Salon</span>
+    <div class="dots" id="dots" role="tablist" aria-label="Slides"></div>
+    <button class="pg" id="popout" aria-label="Pop out clean slide window">⧉ Pop out</button>
+    <button class="pg" id="prev" aria-label="Previous slide">‹ Prev</button>
+    <button class="pg" id="next" aria-label="Next slide">Next ›</button>
+    <span class="counter" id="counter"></span>
+  </div>
+</div>
+
+<script>
+(function(){
+  const isAudience = location.hash === '#audience';
+  const slides=Array.from(document.querySelectorAll('.slide'));
+  const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('rodin-deck') : null;
+
+  // ---- Audience pop-out mode: clean face only, driven by the presenter window ----
+  if(isAudience){
+    document.body.classList.add('audience');
+    let a=0;
+    function showA(n){a=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,k)=>s.classList.toggle('active',k===a));}
+    if(bc){
+      bc.onmessage=e=>{const d=e.data;if(!d)return;if(d.type==='go')showA(d.i);};
+      bc.postMessage({type:'ready'});
+    }
+    document.addEventListener('keydown',e=>{
+      if((e.key==='ArrowRight'||e.key===' '||e.key==='PageDown')&&bc){e.preventDefault();bc.postMessage({type:'nav',d:1});}
+      if((e.key==='ArrowLeft'||e.key==='PageUp')&&bc){e.preventDefault();bc.postMessage({type:'nav',d:-1});}
+      if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}else{document.exitFullscreen&&document.exitFullscreen();}}
+    });
+    return; // no nav / notes wiring in the audience window
+  }
+
+  // ---- Presenter window ----
+  const dotsEl=document.getElementById('dots');
+  const prev=document.getElementById('prev'), next=document.getElementById('next');
+  const counter=document.getElementById('counter');
+  const notesBody=document.getElementById('notesBody');
+  const popout=document.getElementById('popout');
+  let i=0;
+  slides.forEach((_,n)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('role','tab');
+    b.setAttribute('aria-label','Slide '+(n+1));b.addEventListener('click',()=>go(n));dotsEl.appendChild(b);});
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    Array.from(dotsEl.children).forEach((d,k)=>d.setAttribute('aria-current',k===i?'true':'false'));
+    prev.disabled=i===0; next.disabled=i===slides.length-1;
+    counter.textContent=(i+1)+' / '+slides.length;
+    const note=slides[i].querySelector('.notes');
+    notesBody.innerHTML=note?note.innerHTML:'<p style="opacity:.6">(no notes for this slide)</p>';
+    if(bc)bc.postMessage({type:'go',i});
+  }
+  prev.addEventListener('click',()=>go(i-1));
+  next.addEventListener('click',()=>go(i+1));
+  window.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(i+1);}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+    if(e.key==='n'||e.key==='N')document.body.classList.toggle('notes-on');
+    if(e.key==='p'||e.key==='P')openAudience();
+  });
+  // Touch / swipe navigation for phones and tablets.
+  let tsx=0,tsy=0,tst=0;
+  const deckEl=document.querySelector('.deck');
+  deckEl.addEventListener('touchstart',e=>{const t=e.changedTouches[0];tsx=t.clientX;tsy=t.clientY;tst=e.timeStamp;},{passive:true});
+  deckEl.addEventListener('touchend',e=>{
+    const t=e.changedTouches[0];const dx=t.clientX-tsx,dy=t.clientY-tsy;
+    // horizontal swipe, clearly not a vertical scroll, not a stray tap on a link
+    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.6 && (e.timeStamp-tst)<800){
+      if(dx<0)go(i+1); else go(i-1);
+    }
+  },{passive:true});
+
+  // The presenter window is where notes live; turn them on by default here.
+  document.body.classList.add('notes-on');
+
+  function openAudience(){
+    // Same document, #audience hash → clean-face mode. Same origin, so BroadcastChannel syncs them.
+    const w=window.open(location.pathname+location.search+'#audience','rodin-audience',
+      'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+    if(!w){alert('Pop-out was blocked. Allow pop-ups for this page, or open it as a standalone tab (not inside an embedded preview).');return;}
+    popout.classList.add('live'); popout.textContent='⧉ Live';
+  }
+  popout.addEventListener('click',openAudience);
+
+  if(bc){
+    bc.onmessage=e=>{const d=e.data;if(!d)return;
+      if(d.type==='ready'){popout.classList.add('live');popout.textContent='⧉ Live';bc.postMessage({type:'go',i});}
+      if(d.type==='nav')go(i+d.d);
+    };
+  }
+  go(0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>relayd — the journey of a message</title>
+<style>
+  :root {
+    --paper: #eceff4; --plate: #ffffff; --vellum: #f7f9fc; --line: #dce1ea;
+    --rule-strong: #c3cad6; --ink: #0e1116; --graphite: #59626f;
+    --cobalt: #1633e0; --wash: #e7eaff; --ember: #f5451b; --ash: #ffeae3;
+    --lime: #c6f224; --teal: #00786a; --teal-soft: #e2f5f1;
+    --shadow: 0 1px 0 rgba(14,17,22,0.04), 0 2px 4px rgba(14,17,22,0.03), 0 24px 48px -20px rgba(22,51,224,0.16);
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+    --ease: cubic-bezier(.16,.84,.44,1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; color: var(--ink); font-family: var(--sans); overflow-x: hidden;
+    background: linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px, var(--paper); }
+  header { padding: 2.6rem 5vw 1.2rem; max-width: 1200px; margin: 0 auto; }
+  .rule-top { height: 3px; width: 100%; background: linear-gradient(to right, var(--cobalt) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%); margin-bottom: 1.15rem; }
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem 2rem; }
+  .brand { display: flex; align-items: center; gap: 0.7rem; }
+  .brand-mark { width: 28px; height: 28px; flex: none; background: var(--cobalt); display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .kicker { font-family: var(--mono); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graphite); line-height: 1.5; }
+  .kicker b { color: var(--ink); font-weight: 700; display: block; }
+  .masthead-meta { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); text-align: right; line-height: 1.7; }
+  .masthead-meta em { font-style: normal; color: var(--ink); }
+  main { max-width: 1200px; margin: 0 auto; padding: 0 5vw 3rem; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 2.6rem); letter-spacing: -0.02em; margin: 1.2rem 0 0.5rem; }
+  h1 em { font-style: italic; color: var(--cobalt); }
+  .sub { color: var(--graphite); font-size: 1.02rem; line-height: 1.55; max-width: 54rem; margin: 0 0 1.8rem; }
+
+  .plate { position: relative; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 1.6rem 1.6rem 1.2rem; }
+  .plate::before, .plate::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  .plate::before { top: -1px; left: -1px; border-top: 2px solid var(--cobalt); border-left: 2px solid var(--cobalt); }
+  .plate::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cobalt); border-right: 2px solid var(--cobalt); }
+  .plate-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.8rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .plate-head h2 { font-family: var(--display); font-weight: 400; font-size: 1.2rem; margin: 0; }
+  .legend { display: flex; gap: 1.1rem; font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend i { width: 22px; height: 0; border-top-width: 2px; border-top-style: solid; display: inline-block; }
+  .legend .inbound i { border-color: var(--cobalt); }
+  .legend .reply i { border-color: var(--teal); border-top-style: dashed; }
+  .legend .stop i { border-color: var(--ember); }
+
+  svg.journey { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .lane text.lane-label { font-family: var(--mono); font-size: 10px; fill: var(--graphite); letter-spacing: 0.08em; text-transform: uppercase; }
+  .lifeline { stroke: var(--rule-strong); stroke-width: 1.2; stroke-dasharray: 2 4; }
+  .actor rect { fill: var(--vellum); stroke: var(--rule-strong); stroke-width: 1.4; }
+  .actor.model rect { fill: var(--teal-soft); stroke: var(--teal); stroke-width: 1.6; }
+  .actor.relayd rect { fill: #fbfcff; stroke: var(--cobalt); stroke-width: 1.6; }
+  .actor text { font-family: var(--sans); font-weight: 650; font-size: 12px; fill: var(--ink); text-anchor: middle; }
+  .actor .sub { font-family: var(--mono); font-weight: 400; font-size: 8px; fill: var(--graphite); letter-spacing: 0.05em; }
+  .actor.model text.main { fill: var(--teal); }
+
+  .gate rect { fill: var(--wash); stroke: var(--cobalt); stroke-width: 1.2; }
+  .gate text.n { font-family: var(--mono); font-size: 9px; font-weight: 700; fill: var(--cobalt); }
+  .gate text.t { font-family: var(--sans); font-size: 10.5px; font-weight: 600; fill: var(--ink); }
+  .gate text.d { font-family: var(--mono); font-size: 8px; fill: var(--graphite); letter-spacing: 0.03em; }
+  .gate.stopmark rect { fill: var(--ash); stroke: var(--ember); }
+  .gate.stopmark text.n { fill: var(--ember); }
+
+  .hop { stroke: var(--cobalt); stroke-width: 1.7; fill: none; }
+  .hop.reply { stroke: var(--teal); stroke-width: 1.6; stroke-dasharray: 5 3; }
+  .hop-label { font-family: var(--mono); font-size: 8.5px; fill: var(--graphite); letter-spacing: 0.04em; }
+  .stopout { stroke: var(--ember); stroke-width: 1.4; fill: none; stroke-dasharray: 3 2; }
+  .stopout-label { font-family: var(--mono); font-size: 7.5px; fill: #c8431e; letter-spacing: 0.03em; }
+
+  .note { margin-top: 1.4rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.8rem; }
+  .note .card { background: var(--vellum); border: 1px solid var(--line); border-radius: 8px; padding: 0.8rem 0.95rem; }
+  .note .card h3 { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cobalt); margin: 0 0 0.4rem; }
+  .note .card p { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--ink); }
+  .note .card code { font-family: var(--mono); font-size: 0.82em; background: var(--plate); border: 1px solid var(--line); padding: 0.03em 0.3em; border-radius: 4px; }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 1.4rem 5vw 3rem; font-family: var(--mono); font-size: 0.7rem; color: var(--graphite); border-top: 1px solid var(--line); }
+  footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="rule-top"></div>
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-7 4 14 2-9 2 4h2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="kicker"><b>relayd</b>message flow</div>
+    </div>
+    <div class="masthead-meta"><div><em>Client Interaction</em></div><div>Read from live source</div></div>
+  </div>
+</header>
+
+<main>
+  <h1>The journey of a message, <em>chat client → model</em></h1>
+  <p class="sub">One message, traced through relayd's deterministic control chain exactly as the code runs it (<code>internal/relay/relay.go</code>, <code>Broker.Run</code>). Each numbered gate can admit the message onward or divert it — the message only reaches the model if it survives every gate in order.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <h2>Inbound path &amp; return path</h2>
+      <div class="legend">
+        <span class="inbound"><i></i>message advancing</span>
+        <span class="stop"><i></i>diverted / refused</span>
+        <span class="reply"><i></i>reply retraces</span>
+      </div>
+    </div>
+
+    <svg class="journey" viewBox="0 0 1120 620" role="img" aria-label="Sequence diagram: a message from a chat client travels through relayd's ordered gate chain — lockdown, session gate, anomaly score, slash-command check, budget gate, per-conversation token cap — then across a unix socket to the relay-shim MCP server and into the Claude Code model; the reply retraces the path back.">
+      <defs>
+        <marker id="j-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+        <marker id="j-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker>
+        <marker id="j-stop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker>
+      </defs>
+
+      <!-- Actors across the top -->
+      <g class="actor">
+        <rect x="20" y="20" width="150" height="52" rx="8"/>
+        <text class="main" x="95" y="42">Chat client</text>
+        <text class="sub" x="95" y="58" text-anchor="middle">Telegram · Discord</text>
+      </g>
+      <g class="actor relayd">
+        <rect x="360" y="20" width="330" height="52" rx="8"/>
+        <text class="main" x="525" y="42" fill="#1633e0">relayd — the gate chain</text>
+        <text class="sub" x="525" y="58" text-anchor="middle">deterministic control, in Go</text>
+      </g>
+      <g class="actor">
+        <rect x="770" y="20" width="150" height="52" rx="8"/>
+        <text class="main" x="845" y="42">relay-shim</text>
+        <text class="sub" x="845" y="58" text-anchor="middle">MCP over unix socket</text>
+      </g>
+      <g class="actor model">
+        <rect x="948" y="20" width="150" height="52" rx="8"/>
+        <text class="main" x="1023" y="42">Claude Code</text>
+        <text class="sub" x="1023" y="58" text-anchor="middle">the model</text>
+      </g>
+
+      <!-- lifelines -->
+      <line class="lifeline" x1="95" y1="72" x2="95" y2="600"/>
+      <line class="lifeline" x1="525" y1="72" x2="525" y2="560"/>
+      <line class="lifeline" x1="845" y1="72" x2="845" y2="560"/>
+      <line class="lifeline" x1="1023" y1="72" x2="1023" y2="600"/>
+
+      <!-- inbound arrow client -> relayd -->
+      <line class="hop" x1="95" y1="100" x2="360" y2="100" marker-end="url(#j-in)"/>
+      <text class="hop-label" x="100" y="93">user sends a message</text>
+
+      <!-- Gate stack inside relayd column -->
+      <!-- gate template: box at x=390 w=270 -->
+      <g class="gate stopmark"><rect x="390" y="118" width="270" height="40" rx="6"/><text class="n" x="402" y="134">−1</text><text class="t" x="424" y="134">Lockdown?</text><text class="d" x="424" y="149">non-admins blocked while active</text></g>
+      <line class="stopout" x1="660" y1="138" x2="720" y2="138" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="132">refuse</text>
+
+      <g class="gate stopmark"><rect x="390" y="168" width="270" height="40" rx="6"/><text class="n" x="402" y="184">0</text><text class="t" x="424" y="184">Session gate</text><text class="d" x="424" y="199">gated user needs a live tailnet session</text></g>
+      <line class="stopout" x1="660" y1="188" x2="720" y2="188" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="182">challenge</text>
+
+      <g class="gate stopmark"><rect x="390" y="218" width="270" height="40" rx="6"/><text class="n" x="402" y="234">0.5</text><text class="t" x="424" y="234">Anomaly score</text><text class="d" x="424" y="249">style-drift vs sender history · fails open</text></g>
+      <line class="stopout" x1="660" y1="238" x2="720" y2="238" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="232">revoke / warn</text>
+
+      <g class="gate"><rect x="390" y="268" width="270" height="40" rx="6"/><text class="n" x="402" y="284">1</text><text class="t" x="424" y="284">Slash command?</text><text class="d" x="424" y="299">handled locally — never hits the model</text></g>
+      <line class="stopout" x1="660" y1="288" x2="720" y2="288" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="282">local reply</text>
+
+      <g class="gate stopmark"><rect x="390" y="318" width="270" height="40" rx="6"/><text class="n" x="402" y="334">2</text><text class="t" x="424" y="334">Budget / circuit gate</text><text class="d" x="424" y="349">global token budget + breaker</text></g>
+      <line class="stopout" x1="660" y1="338" x2="720" y2="338" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="332">over budget</text>
+
+      <g class="gate stopmark"><rect x="390" y="368" width="270" height="40" rx="6"/><text class="n" x="402" y="384">2.5</text><text class="t" x="424" y="384">Per-conversation cap</text><text class="d" x="424" y="399">charge-then-reject token cap</text></g>
+      <line class="stopout" x1="660" y1="388" x2="720" y2="388" marker-end="url(#j-stop)"/>
+      <text class="stopout-label" x="664" y="382">over cap</text>
+
+      <g class="gate"><rect x="390" y="418" width="270" height="40" rx="6" fill="#e2f5f1" stroke="#00786a"/><text class="n" x="402" y="434" fill="#00786a">3</text><text class="t" x="424" y="434" fill="#00786a">Admitted → Backend.Send</text><text class="d" x="424" y="449">the message survived every gate</text></g>
+
+      <!-- admitted -> shim over unix socket -->
+      <line class="hop" x1="660" y1="438" x2="845" y2="438" marker-end="url(#j-in)"/>
+      <text class="hop-label" x="668" y="431">over the unix socket</text>
+      <!-- shim -> model -->
+      <line class="hop" x1="845" y1="470" x2="1023" y2="470" marker-end="url(#j-in)"/>
+      <text class="hop-label" x="852" y="463">MCP tool delivers the turn</text>
+
+      <!-- reply path -->
+      <line class="hop reply" x1="1023" y1="520" x2="845" y2="520" marker-end="url(#j-reply)"/>
+      <text class="hop-label" x="852" y="513" fill="#00786a">model composes reply</text>
+      <line class="hop reply" x1="845" y1="552" x2="95" y2="552" marker-end="url(#j-reply)"/>
+      <text class="hop-label" x="360" y="545" fill="#00786a">reply retraces the path to the user</text>
+    </svg>
+  </div>
+
+  <div class="note">
+    <div class="card"><h3>Order is the security</h3><p>The gates run in a fixed sequence — lockdown, then session, then anomaly, before a slash command or the model is ever considered. A message must pass every one, in order, to be admitted.</p></div>
+    <div class="card"><h3>Most paths never reach the model</h3><p>A slash command is answered locally; an over-budget or over-cap message is refused; a gated user with no live session gets a re-auth challenge. Only an admitted message crosses to the backend.</p></div>
+    <div class="card"><h3>The socket boundary</h3><p>relayd and the model are separate processes. Admitted messages cross a <code>unix socket</code> to <code>relay-shim</code>, which the model runs as an MCP server — so the daemon and the model can restart independently.</p></div>
+    <div class="card"><h3>Fail-open where it should</h3><p>The anomaly gate is advisory: if its backing store is down it <em>fails open</em> and logs the outage, because the real boundary is the session/allowlist controls — an outage there must not lock everyone out.</p></div>
+  </div>
+</main>
+
+<footer><b>relayd</b> — traced from <code>internal/relay/relay.go</code> (<code>Broker.Run</code>) and <code>cmd/relayd/main.go</code> on the live tree. Gate numbering (−1, 0, 0.5, 1, 2, 2.5, 3) mirrors the code's own step comments.</footer>
+</body>
+</html>

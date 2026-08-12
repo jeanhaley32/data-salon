@@ -1,0 +1,666 @@
+<title>relayd — architecture over time</title>
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     PALETTE — "Cobalt Plate"
+     A cold-paper engineering drawing, not a warm editorial page.
+       paper   #ECEFF4   cool tinted stock the plate sits on
+       plate   #FFFFFF   the drawing surface
+       vellum  #F7F9FC   inset fills (boxes, chips)
+       rule    #DCE1EA   hairlines
+       ink     #0E1116   near-black with a blue bias
+       graphite#59626F   secondary text
+       cobalt  #1633E0   primary structural signal
+       wash    #E7EAFF   cobalt at 8%
+       ember   #F5451B   hot path (message flow)
+       ash     #FFEAE3   ember wash
+       lime    #C6F224   the one loud accent — rules, ticks, active marks only
+       teal    #00786A   terminal / success
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --paper: #ECEFF4;
+    --panel: #ffffff;
+    --panel-2: #f7f9fc;
+    --line: #dce1ea;
+    --rule-strong: #c3cad6;
+    --text: #0e1116;
+    --muted: #59626f;
+    --accent: #1633e0;
+    --accent-soft: #e7eaff;
+    --hot: #f5451b;
+    --hot-soft: #ffeae3;
+    --lime: #c6f224;
+    --success: #00786a;
+    --success-soft: #e2f5f1;
+    --edge: #a9b2c2;
+
+    --shadow:
+      0 1px 0 rgba(14,17,22,0.04),
+      0 2px 4px rgba(14,17,22,0.03),
+      0 24px 48px -20px rgba(22,51,224,0.16);
+
+    /* Three type roles, all system-resident — no network fetch.
+       display: editorial old-style serif, tight and set large
+       mono:    structural metadata, uppercase, wide-tracked
+       sans:    the data layer inside the drawing (max legibility) */
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+
+    --ease: cubic-bezier(.16,.84,.44,1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; color: var(--text);
+    font-family: var(--sans); overflow-x: hidden; height: 100%;
+  }
+  body {
+    display: flex; flex-direction: column; min-height: 100vh;
+    background:
+      /* faint drafting grid on cool stock */
+      linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--paper);
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────── */
+  header {
+    padding: 2.6rem 5vw 1.2rem;
+    max-width: 1320px; width: 100%; margin: 0 auto;
+  }
+  .rule-top {
+    height: 3px; width: 100%;
+    background: linear-gradient(to right, var(--accent) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%);
+    margin-bottom: 1.15rem;
+  }
+  .masthead {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem 2rem;
+  }
+  .brand { display: flex; align-items: center; gap: 0.7rem; }
+  .brand-mark {
+    width: 26px; height: 26px; flex: none;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+  }
+  .brand-mark svg { width: 15px; height: 15px; }
+  .kicker {
+    font-family: var(--mono); font-size: 0.66rem; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+    line-height: 1.5;
+  }
+  .kicker b { color: var(--text); font-weight: 700; letter-spacing: 0.12em; display: block; }
+  .masthead-meta {
+    font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); text-align: right; line-height: 1.7;
+  }
+  .masthead-meta em { font-style: normal; color: var(--text); }
+
+  main {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 0 5vw 2.2rem; width: 100%;
+  }
+
+  /* ── The plate ──────────────────────────────────────────────── */
+  .stage {
+    position: relative;
+    width: 100%; max-width: 1220px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 1.6rem 1.8rem 1.4rem;
+    box-shadow: var(--shadow);
+    animation: plate-in 720ms var(--ease) both;
+  }
+  @keyframes plate-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* corner ticks — drafting registration marks */
+  .stage::before, .stage::after {
+    content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+  }
+  .stage::before {
+    top: -1px; left: -1px;
+    border-top: 2px solid var(--accent); border-left: 2px solid var(--accent);
+  }
+  .stage::after {
+    bottom: -1px; right: -1px;
+    border-bottom: 2px solid var(--accent); border-right: 2px solid var(--accent);
+  }
+
+  .stage-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem 1.6rem; flex-wrap: wrap;
+    padding-bottom: 0.9rem; margin-bottom: 1.1rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .stage-head-left { display: flex; align-items: baseline; gap: 0.85rem; min-width: 0; }
+  .state-index {
+    font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.1em; color: var(--accent);
+    padding-top: 0.15rem;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 3.1vw, 2.35rem);
+    font-weight: 400; margin: 0; letter-spacing: -0.02em; line-height: 1.06;
+  }
+  .state-date {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    border-left: 2px solid var(--lime); padding-left: 0.6rem; white-space: nowrap;
+  }
+  /* title swap gets its own micro-motion so the headline feels alive */
+  .swap { animation: swap-in 460ms var(--ease) both; }
+  @keyframes swap-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  svg.diagram { width: 100%; height: auto; display: block; overflow: visible; }
+
+  /* ── Drawing primitives ─────────────────────────────────────── */
+  .node rect { fill: var(--panel-2); stroke: var(--rule-strong); stroke-width: 1.4; }
+  #nRelayd rect { fill: #fbfcff; stroke: var(--accent); stroke-width: 1.6; stroke-opacity: 0.42; }
+  .node.term rect { fill: var(--success-soft); stroke: var(--success); stroke-width: 1.7; }
+  .node text { fill: var(--text); font-family: var(--sans); }
+  .node .sub { fill: var(--muted); font-family: var(--mono); letter-spacing: 0.04em; }
+  .node.term text.label { fill: var(--success); }
+
+  .edge { stroke: var(--edge); stroke-width: 1.5; fill: none; }
+  .edge.hot { stroke: var(--hot); stroke-width: 2.1; }
+  .edge-label {
+    fill: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .gate rect { fill: var(--panel-2); stroke: var(--rule-strong); stroke-width: 1.2; }
+  .gate text { fill: var(--text); font-family: var(--sans); font-size: 10.5px; font-weight: 600; }
+  .gate .sub { fill: var(--muted); font-family: var(--mono); font-size: 8.5px; font-weight: 400; }
+
+  .panel-box rect { fill: var(--hot-soft); stroke: var(--hot); stroke-width: 1.2; stroke-dasharray: 4 3; }
+  .panel-box text.label {
+    fill: #b8320f; font-family: var(--mono); font-weight: 700; font-size: 9px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .panel-box text.item { fill: #964227; font-family: var(--mono); font-size: 8.5px; }
+
+  .admitted rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.7; }
+  .admitted text.label { fill: var(--accent); font-weight: 700; }
+
+  .morph { transition: transform 660ms var(--ease), opacity 340ms ease; }
+  .fade { transition: opacity 340ms ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .morph, .fade { transition: none; }
+    .stage, .swap { animation: none; }
+  }
+
+  /* ── Ledger navigation (replaces anonymous dots) ────────────── */
+  .controls {
+    display: flex; align-items: stretch; gap: 0.9rem;
+    margin-top: 1.2rem; padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  button.nav {
+    appearance: none; border: 1px solid var(--line); background: #fff;
+    color: var(--muted); width: 2.4rem; flex: none;
+    font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color 160ms, color 160ms, background 160ms;
+  }
+  button.nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  button.nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.nav:disabled { opacity: 0.28; cursor: default; }
+
+  .dots {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    gap: 0.55rem; flex: 1; min-width: 0;
+  }
+  .dot {
+    position: relative; appearance: none; border: none; cursor: pointer;
+    background: transparent; text-align: left; padding: 0.5rem 0 0.15rem;
+    border-top: 2px solid var(--line);
+    display: flex; flex-direction: column; gap: 0.18rem; min-width: 0;
+    transition: border-color 220ms var(--ease);
+  }
+  .dot .dot-num {
+    font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em;
+    color: var(--muted); transition: color 180ms;
+  }
+  .dot .dot-label {
+    font-family: var(--sans); font-size: 0.76rem; font-weight: 550; letter-spacing: -0.005em;
+    color: var(--muted); line-height: 1.25;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    transition: color 180ms;
+  }
+  .dot:hover { border-top-color: var(--rule-strong); }
+  .dot:hover .dot-label { color: var(--text); }
+  .dot[aria-current="true"] { border-top-color: var(--accent); }
+  .dot[aria-current="true"] .dot-num { color: var(--accent); }
+  .dot[aria-current="true"] .dot-label { color: var(--text); font-weight: 650; }
+  /* lime tick rides the active step */
+  .dot[aria-current="true"]::after {
+    content: ""; position: absolute; top: -2px; left: 0; width: 26px; height: 2px;
+    background: var(--lime);
+    animation: tick-in 420ms var(--ease) both;
+  }
+  @keyframes tick-in { from { width: 0; } to { width: 26px; } }
+  .dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  footer {
+    width: 100%; max-width: 1220px; margin: 0 auto;
+    padding: 0.9rem 5vw 2rem;
+    display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.13em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  footer kbd {
+    font-family: var(--mono); background: #fff; border: 1px solid var(--line);
+    padding: 0.05rem 0.3rem; color: var(--text); font-size: 0.62rem;
+  }
+
+  @media (max-width: 720px) {
+    .dot .dot-label { display: none; }
+    .stage { padding: 1.1rem 1rem 1rem; }
+  }
+</style>
+
+<header>
+  <div class="rule-top"></div>
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h5l2-6 4 12 2-6h3" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="kicker"><b>relayd</b>Architecture over time</span>
+    </div>
+    <div class="masthead-meta">
+      Systems Thinking Data Salon<br>
+      Plate <em>01</em> · Four states, one daemon
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <div class="stage-head">
+      <div class="stage-head-left">
+        <span class="state-index" id="stateIndex">01/04</span>
+        <h1 id="stateTitle">Day one</h1>
+      </div>
+      <span class="state-date" id="stateDate">2026-07-03</span>
+    </div>
+
+    <svg class="diagram" viewBox="0 0 1180 480" role="img" aria-label="Diagram of relayd's architecture, currently showing: Day one">
+
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#a9b2c2"/>
+        </marker>
+        <marker id="arrowHot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/>
+        </marker>
+      </defs>
+
+      <g id="edgesS0">
+        <path class="edge morph" d="M 172 275 L 226 275" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 440 258 L 470 258" marker-end="url(#arrow)"/>
+        <path class="edge morph hot" d="M 640 258 L 726 275" marker-end="url(#arrowHot)"/>
+        <path class="edge morph" d="M 880 320 L 880 390 L 95 390 L 95 320" marker-end="url(#arrow)"/>
+        <text class="edge-label morph" x="491" y="405" text-anchor="middle">reply retraces the path</text>
+      </g>
+
+      <g id="edgesS1" style="opacity:0">
+        <path class="edge morph" d="M 160 150 L 240 112" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 390 112 L 418 112" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 568 112 L 598 112" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 673 134 L 673 158" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 493 134 L 493 158" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+        <path class="edge morph hot" d="M 748 180 L 848 160" marker-end="url(#arrowHot)"/>
+      </g>
+
+      <g id="edgesS2" style="opacity:0">
+        <path class="edge morph" d="M 152 90 L 212 128" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 152 180 L 212 142" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 344 135 L 398 135" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 564 210 L 564 240" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+        <path class="edge morph" d="M 564 320 L 630 320 L 630 165 L 730 145" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+        <path class="edge morph hot" d="M 730 135 L 796 135" marker-end="url(#arrowHot)"/>
+      </g>
+
+      <g id="edgesS3" style="opacity:0">
+        <path class="edge morph" d="M 172 185 L 210 185 L 210 115 L 250 115" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 172 275 L 210 275 L 210 115" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 560 275 L 626 275" marker-end="url(#arrow)"/>
+        <path class="edge morph" d="M 626 292 L 560 292" marker-end="url(#arrow)" stroke-dasharray="3 3"/>
+        <path class="edge morph hot" d="M 700 275 L 900 275" marker-end="url(#arrowHot)"/>
+        <path class="edge morph" d="M 900 292 L 700 292" marker-end="url(#arrow)" stroke-dasharray="3 3"/>
+        <path class="edge morph" d="M 395 466 L 395 356" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+      </g>
+
+      <!-- Telegram -->
+      <g class="node morph" id="nTelegram" style="transform: translate(20px, 230px)">
+        <rect width="152" height="90" rx="3"/>
+        <text class="label" x="76" y="38" text-anchor="middle" font-size="13" font-weight="700">Telegram</text>
+        <text class="sub" x="76" y="58" text-anchor="middle" font-size="10">DM</text>
+      </g>
+
+      <g class="node morph fade" id="nDiscord" style="transform: translate(20px, 340px); opacity:0">
+        <rect width="152" height="90" rx="3"/>
+        <text class="label" x="76" y="38" text-anchor="middle" font-size="13" font-weight="700">Discord</text>
+        <text class="sub" x="76" y="58" text-anchor="middle" font-size="10">gateway</text>
+      </g>
+
+      <g class="node morph fade" id="nMulti" style="transform: translate(210px, 233px); opacity:0">
+        <rect width="132" height="44" rx="3"/>
+        <text class="label" x="66" y="27" text-anchor="middle" font-size="9.5" font-weight="700">MultiFrontend</text>
+      </g>
+
+      <g class="node morph" id="nRelayd" style="transform: translate(230px, 60px)">
+        <rect width="420" height="380" rx="3"/>
+        <text class="label" x="210" y="30" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--accent)">relayd</text>
+      </g>
+
+      <g class="gate morph" id="gCommands" style="transform: translate(270px, 110px)">
+        <rect width="170" height="46" rx="3"/>
+        <text x="85" y="22" text-anchor="middle">commands?</text>
+        <text class="sub" x="85" y="36" text-anchor="middle">/help /rate /pause</text>
+      </g>
+
+      <g class="gate morph" id="gBudget" style="transform: translate(470px, 110px)">
+        <rect width="170" height="46" rx="3"/>
+        <text x="85" y="22" text-anchor="middle">budget / rate gate</text>
+        <text class="sub" x="85" y="36" text-anchor="middle">circuit breaker</text>
+      </g>
+
+      <g class="gate morph fade" id="gLockdown" style="transform: translate(250px, 150px); opacity:0">
+        <rect width="290" height="34" rx="3"/>
+        <text x="145" y="21" text-anchor="middle">lockdown check</text>
+      </g>
+
+      <g class="gate morph fade" id="gSession" style="transform: translate(250px, 194px); opacity:0">
+        <rect width="290" height="34" rx="3"/>
+        <text x="145" y="21" text-anchor="middle" font-size="10">session gate — tailnet re-auth</text>
+      </g>
+
+      <g class="gate morph fade" id="gAnomaly" style="transform: translate(250px, 238px); opacity:0">
+        <rect width="290" height="34" rx="3"/>
+        <text x="145" y="21" text-anchor="middle" font-size="10">anomaly / style-drift score</text>
+      </g>
+
+      <g class="node admitted morph fade" id="gAdmitted" style="transform: translate(250px, 370px); opacity:0">
+        <rect width="290" height="34" rx="3"/>
+        <text class="label" x="145" y="21" text-anchor="middle" font-size="10.5" font-weight="700">admitted → Backend.Send</text>
+      </g>
+
+      <g class="gate morph fade" id="gScheduler" style="transform: translate(250px, 300px); opacity:0">
+        <rect width="330" height="42" rx="3"/>
+        <text x="165" y="18" text-anchor="middle" font-size="10">scheduler</text>
+        <text class="sub" x="165" y="32" text-anchor="middle" font-size="8.5">self-wakeups, pending-event tracker</text>
+      </g>
+
+      <g class="panel-box morph fade" id="gApproval" style="transform: translate(410px, 158px); opacity:0">
+        <rect width="170" height="52" rx="3"/>
+        <text class="label" x="85" y="21" text-anchor="middle">expired → challenge</text>
+        <text class="item" x="85" y="36" text-anchor="middle">tailnet-only page</text>
+      </g>
+
+      <g class="panel-box morph fade" id="gReview" style="transform: translate(400px, 240px); opacity:0">
+        <rect width="330" height="80" rx="3"/>
+        <text class="label" x="165" y="24" text-anchor="middle">six-round review loop</text>
+        <text class="item" x="165" y="42" text-anchor="middle">draft → critique → revise, capped</text>
+        <text class="item" x="165" y="58" text-anchor="middle">rounds, before it reaches Claude</text>
+      </g>
+
+      <g class="fade" id="gSocket" style="opacity:0">
+        <line x1="628" y1="200" x2="628" y2="350" stroke="#a9b2c2" stroke-width="1.2" stroke-dasharray="2 4"/>
+        <text x="628" y="190" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="var(--mono)" letter-spacing="0.09em">UNIX SOCKET</text>
+      </g>
+
+      <g class="node morph fade" id="nShim" style="transform: translate(700px, 230px); opacity:0">
+        <rect width="150" height="90" rx="3"/>
+        <text class="label" x="75" y="34" text-anchor="middle" font-size="12" font-weight="700">relay-shim</text>
+        <text class="sub" x="75" y="52" text-anchor="middle" font-size="9">short-lived</text>
+        <text class="sub" x="75" y="66" text-anchor="middle" font-size="9">MCP server</text>
+      </g>
+
+      <g class="node term morph" id="nClaude" style="transform: translate(730px, 110px)">
+        <rect width="150" height="80" rx="3"/>
+        <text class="label" x="75" y="36" text-anchor="middle" font-size="13" font-weight="700">Claude Code</text>
+        <text class="sub" x="75" y="55" text-anchor="middle" font-size="10">Sonnet</text>
+      </g>
+
+      <g class="fade" id="gShortcut" style="opacity:0">
+        <text text-anchor="middle" font-size="9.5" fill="var(--accent)" font-family="var(--mono)">
+          <tspan x="395" y="452">scheduler / Grafana injects directly —</tspan>
+          <tspan x="395" y="465">bypasses the gate chain</tspan>
+        </text>
+      </g>
+
+    </svg>
+
+    <div class="controls">
+      <button class="nav" id="prevBtn" aria-label="Previous state">←</button>
+      <div class="dots" id="dots" role="tablist" aria-label="Architecture states"></div>
+      <button class="nav" id="nextBtn" aria-label="Next state">→</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>Verified against relayd's git history</span>
+  <span><kbd>←</kbd> <kbd>→</kbd> to advance the plate</span>
+</footer>
+
+<script>
+(function () {
+  const states = [
+    {
+      title: "Day one", date: "2026-07-03",
+      nodes: {
+        nTelegram: { x: 20, y: 230, opacity: 1, w: 152, h: 90, text: "Telegram" },
+        nDiscord: { opacity: 0 },
+        nMulti: { opacity: 0 },
+        nRelayd: { x: 230, y: 165, w: 420, h: 170 },
+        gCommands: { x: 270, y: 235, opacity: 1 },
+        gBudget: { x: 470, y: 235, opacity: 1 },
+        gLockdown: { opacity: 0 },
+        gSession: { opacity: 0 },
+        gAnomaly: { opacity: 0 },
+        gAdmitted: { opacity: 0 },
+        gScheduler: { opacity: 0 },
+        gApproval: { opacity: 0 },
+        gReview: { opacity: 0 },
+        gSocket: { opacity: 0 },
+        nShim: { opacity: 0 },
+        nClaude: { x: 730, y: 235, w: 150, h: 80 },
+        gShortcut: { opacity: 0 }
+      },
+      edges: "edgesS0"
+    },
+    {
+      title: "Trust layer arrives", date: "2026-07-10",
+      nodes: {
+        nTelegram: { x: 20, y: 120, w: 140, h: 80 },
+        nDiscord: { opacity: 0 },
+        nMulti: { opacity: 0 },
+        nRelayd: { x: 220, y: 40, w: 560, h: 240 },
+        gCommands: { x: 598, y: 90, w: 150, h: 44, opacity: 1, text: "commands?" },
+        gBudget: { x: 598, y: 158, w: 150, h: 44, opacity: 1, text: "budget / rate gate" },
+        gLockdown: { x: 240, y: 90, w: 150, h: 44, opacity: 1, text: "lockdown?" },
+        gSession: { x: 418, y: 90, w: 150, h: 44, opacity: 1, text: "session gate" },
+        gAnomaly: { opacity: 0 },
+        gAdmitted: { opacity: 0 },
+        gScheduler: { x: 240, y: 220, w: 330, h: 44, opacity: 1 },
+        gApproval: { x: 418, y: 158, opacity: 1 },
+        gReview: { opacity: 0 },
+        gSocket: { opacity: 0 },
+        nShim: { opacity: 0 },
+        nClaude: { x: 850, y: 120, w: 130, h: 80 },
+        gShortcut: { opacity: 0 }
+      },
+      edges: "edgesS1"
+    },
+    {
+      title: "Discord joins, six-round review", date: "2026-07-14 → 07-17",
+      nodes: {
+        nTelegram: { x: 20, y: 60, w: 132, h: 60, text: "Telegram" },
+        nDiscord: { x: 20, y: 150, w: 132, h: 60, opacity: 1 },
+        nMulti: { x: 210, y: 115, opacity: 1 },
+        nRelayd: { x: 398, y: 60, w: 332, h: 150 },
+        gCommands: { opacity: 0 },
+        gBudget: { opacity: 0 },
+        gLockdown: { opacity: 0 },
+        gSession: { opacity: 0 },
+        gAnomaly: { opacity: 0 },
+        gAdmitted: { opacity: 0 },
+        gScheduler: { opacity: 0 },
+        gApproval: { opacity: 0 },
+        gReview: { x: 398, y: 240, w: 332, h: 80, opacity: 1 },
+        gSocket: { opacity: 0 },
+        nShim: { opacity: 0 },
+        nClaude: { x: 798, y: 105, w: 130, h: 60 },
+        gShortcut: { opacity: 0 }
+      },
+      edges: "edgesS2"
+    },
+    {
+      title: "Full gate chain, today", date: "2026-08-07",
+      nodes: {
+        nTelegram: { x: 20, y: 150, w: 152, h: 70, text: "Telegram" },
+        nDiscord: { x: 20, y: 240, w: 152, h: 70, opacity: 1 },
+        nMulti: { opacity: 0 },
+        nRelayd: { x: 230, y: 40, w: 330, h: 440 },
+        gCommands: { x: 250, y: 230, w: 290, h: 34, opacity: 1, text: "/command dispatch", subText: "" },
+        gBudget: { x: 250, y: 274, w: 290, h: 34, opacity: 1, text: "budget + per-chat token cap", subText: "" },
+        gLockdown: { x: 250, y: 98, w: 290, h: 34, opacity: 1, text: "lockdown check" },
+        gSession: { x: 250, y: 142, w: 290, h: 34, opacity: 1, text: "session gate — tailnet re-auth" },
+        gAnomaly: { x: 250, y: 186, w: 290, h: 34, opacity: 1, text: "anomaly / style-drift score" },
+        gAdmitted: { x: 250, y: 322, w: 290, h: 34, opacity: 1 },
+        gScheduler: { opacity: 0 },
+        gApproval: { opacity: 0 },
+        gReview: { opacity: 0 },
+        gSocket: { opacity: 1 },
+        nShim: { x: 700, y: 230, opacity: 1 },
+        nClaude: { x: 920, y: 220, w: 230, h: 110 },
+        gShortcut: { opacity: 1 }
+      },
+      edges: "edgesS3"
+    }
+  ];
+
+  let idx = 0;
+  const svgEl = document.querySelector("svg");
+  const titleEl = document.getElementById("stateTitle");
+  const dateEl = document.getElementById("stateDate");
+  const dotsEl = document.getElementById("dots");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  const indexEl = document.getElementById("stateIndex");
+  const pad = n => String(n).padStart(2, "0");
+
+  states.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "dot";
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-label", s.title);
+    const num = document.createElement("span");
+    num.className = "dot-num";
+    num.textContent = pad(i + 1);
+    const lab = document.createElement("span");
+    lab.className = "dot-label";
+    lab.textContent = s.title;
+    b.append(num, lab);
+    b.addEventListener("click", () => render(i));
+    dotsEl.appendChild(b);
+  });
+
+  const edgeGroups = ["edgesS0", "edgesS1", "edgesS2", "edgesS3"];
+
+  // Capture each node's authored (default) width/height/text so any state that
+  // doesn't override them can be reset back, instead of leaking stale values
+  // in from whichever state last set them (matters for back/dot navigation).
+  const defaults = {};
+  document.querySelectorAll(".node, .gate, .panel-box").forEach(el => {
+    if (!el.id) return;
+    const rect = el.querySelector("rect");
+    const label = el.querySelector("text.label") || el.querySelector("text");
+    const sub = el.querySelector("text.sub");
+    defaults[el.id] = {
+      w: rect ? Number(rect.getAttribute("width")) : undefined,
+      h: rect ? Number(rect.getAttribute("height")) : undefined,
+      text: label ? label.textContent : undefined,
+      subText: sub ? sub.textContent : undefined
+    };
+  });
+
+  function render(i) {
+    idx = i;
+    const s = states[i];
+    titleEl.textContent = s.title;
+    dateEl.textContent = s.date;
+    indexEl.textContent = pad(i + 1) + "/" + pad(states.length);
+    // retrigger the headline swap animation
+    [titleEl, dateEl].forEach(el => {
+      el.classList.remove("swap");
+      void el.offsetWidth;
+      el.classList.add("swap");
+    });
+    svgEl.setAttribute("aria-label", "Diagram of relayd's architecture, currently showing: " + s.title);
+
+    for (const [id, cfg] of Object.entries(s.nodes)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const def = defaults[id] || {};
+      const opacity = cfg.opacity === undefined ? 1 : cfg.opacity;
+      el.style.opacity = opacity;
+      if (cfg.x !== undefined && cfg.y !== undefined) {
+        el.style.transform = "translate(" + cfg.x + "px, " + cfg.y + "px)";
+      }
+      const rect = el.querySelector("rect");
+      const w = cfg.w !== undefined ? cfg.w : def.w;
+      const h = cfg.h !== undefined ? cfg.h : def.h;
+      if (rect && w !== undefined) rect.setAttribute("width", w);
+      if (rect && h !== undefined) rect.setAttribute("height", h);
+      const label = el.querySelector("text.label") || el.querySelector("text");
+      if (label) label.textContent = cfg.text !== undefined ? cfg.text : def.text;
+      const sub = el.querySelector("text.sub");
+      if (sub) {
+        const subText = cfg.subText !== undefined ? cfg.subText : def.subText;
+        sub.textContent = subText || "";
+        sub.style.opacity = subText ? 1 : 0;
+      }
+
+      // Re-center every text.anchor=middle element inside this node whenever
+      // the box width changes, so labels never drift off-center or overflow.
+      if (rect && w !== undefined) {
+        el.querySelectorAll('text[text-anchor="middle"]').forEach(t => {
+          t.setAttribute("x", w / 2);
+        });
+      }
+    }
+
+    edgeGroups.forEach(g => {
+      document.getElementById(g).style.opacity = (g === s.edges) ? 1 : 0;
+    });
+
+    Array.from(dotsEl.children).forEach((d, di) => {
+      d.setAttribute("aria-current", di === i ? "true" : "false");
+    });
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === states.length - 1;
+  }
+
+  prevBtn.addEventListener("click", () => { if (idx > 0) render(idx - 1); });
+  nextBtn.addEventListener("click", () => { if (idx < states.length - 1) render(idx + 1); });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" && idx < states.length - 1) render(idx + 1);
+    if (e.key === "ArrowLeft" && idx > 0) render(idx - 1);
+  });
+
+  render(0);
+})();
+</script>

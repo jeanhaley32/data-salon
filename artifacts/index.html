@@ -1,0 +1,361 @@
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Salon — Artifacts</title>
+<style>
+:root{--paper:#eceff4;--plate:#fff;--vellum:#f7f9fc;--line:#dce1ea;--rule-strong:#c3cad6;--ink:#0e1116;--graphite:#59626f;--cobalt:#1633e0;--wash:#e7eaff;--ember:#f5451b;--lime:#c6f224;--teal:#00786a;--teal-soft:#e2f5f1;
+--display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,ui-serif,serif;--mono:ui-monospace,"SF Mono",Menlo,"Cascadia Mono",Consolas,monospace;--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;color:var(--ink);font-family:var(--sans);
+ background:linear-gradient(to right,rgba(22,51,224,.045) 1px,transparent 1px) 0 0/32px 32px,linear-gradient(to bottom,rgba(22,51,224,.045) 1px,transparent 1px) 0 0/32px 32px,var(--paper);}
+.wrap{max-width:1080px;margin:0 auto;padding:4vh 5vw 8vh;}
+.rule-top{height:3px;width:100%;margin-bottom:1.6rem;background:linear-gradient(to right,var(--cobalt) 0 16%,var(--lime) 16% 23%,var(--line) 23% 100%);}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cobalt);margin:0 0 .5rem;}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,5vw,3.6rem);letter-spacing:-.02em;line-height:1.02;margin:0 0 .6rem;}
+.lede{font-size:1.05rem;line-height:1.5;color:var(--graphite);max-width:44rem;margin:0 0 2.4rem;}
+h2.sec{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:2.8rem 0 1.2rem;padding-bottom:.5rem;border-bottom:2px solid var(--ink);letter-spacing:-.01em;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--plate);border:1px solid var(--line);border-left:3px solid var(--cobalt);border-radius:0 10px 10px 0;padding:1.1rem 1.2rem;box-shadow:0 1px 0 rgba(14,17,22,.04),0 16px 34px -24px rgba(22,51,224,.2);transition:transform .15s,border-color .15s;}
+a.card:hover{transform:translateY(-2px);border-left-color:var(--ember);}
+a.card .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);}
+a.card .n{font-family:var(--display);font-size:1.35rem;margin:.2rem 0 .3rem;}
+a.card .d{font-size:.9rem;color:var(--graphite);line-height:1.45;}
+a.card .l{display:block;font-family:var(--mono);font-size:.72rem;color:var(--cobalt);margin-top:.6rem;word-break:break-all;}
+figure.plate{background:var(--plate);border:1px solid var(--line);border-radius:2px;padding:1.2rem 1.2rem .6rem;margin:0 0 1.4rem;box-shadow:0 1px 0 rgba(14,17,22,.04),0 20px 44px -28px rgba(22,51,224,.18);}
+figure.plate .cap-t{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cobalt);}
+figure.plate h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:.15rem 0 .8rem;}
+svg.d{width:100%;height:auto;max-height:46vh;display:block;overflow:visible;}
+figure.plate figcaption{margin-top:.7rem;font-family:var(--mono);font-size:.72rem;color:var(--graphite);line-height:1.5;}
+svg.portrait{width:100%;height:auto;display:block;}
+.docs{font-family:var(--mono);font-size:.82rem;color:var(--graphite);line-height:1.9;}
+.docs b{color:var(--ink);font-weight:600;}
+/* diagram primitives */
+  .node rect{fill:var(--vellum);stroke:var(--rule-strong);stroke-width:1.4;}
+  .node.cobalt rect{fill:#fbfcff;stroke:var(--cobalt);stroke-width:1.6;}
+  .node.term rect{fill:var(--teal-soft);stroke:var(--teal);stroke-width:1.6;}
+  .node .t{font-family:var(--sans);font-weight:650;font-size:13px;fill:var(--ink);text-anchor:middle;}
+  .node.term .t{fill:var(--teal);} .node.cobalt .t{fill:var(--cobalt);}
+  .node .s{font-family:var(--mono);font-size:8.5px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
+  .flow{stroke:var(--cobalt);stroke-width:1.8;fill:none;}
+  .flow.soft{stroke:var(--rule-strong);}
+  .flow-l{font-family:var(--mono);font-size:9px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
+  
+</style>
+<div class="wrap"><div class="rule-top"></div>
+<p class="eyebrow">Systems Thinking Data Salon · 2026-08-12</p>
+<h1>Building a Home Control Plane From Parts</h1>
+<p class="lede">Everything made for the talk, gathered in one place: the deck, the system designs it was built on, an interactive tour, and a self-portrait of the machine that runs it all.</p>
+<div class="cards">
+<a class="card" href="/talk"><span class="k">The Talk</span><div class="n">The Deck</div><div class="d">12 slides, speaker notes, pop-out presenter view, live transitions.</div><span class="l">/talk</span></a>
+<a class="card" href="/portrait"><span class="k">Illustration</span><div class="n">Self-Portrait</div><div class="d">The thinking machine as it perceives itself, as an anatomical plate.</div><span class="l">/portrait</span></a>
+<a class="card" href="/tour"><span class="k">Interactive</span><div class="n">Guided Tour</div><div class="d">A walkthrough of how the relay actually works, step by step.</div><span class="l">/tour</span></a>
+</div>
+<h2 class="sec">Component Deep-Dives</h2>
+<div class="cards">
+<a class="card" href="/tour"><span class="k">Interactive · 4 layers</span><div class="n">Guided Tour</div><div class="d">The system layer by layer — the relay, the scheduler, and the observability stack (Prometheus / Loki / Grafana) — walked through step by step.</div><span class="l">/tour</span></a>
+<a class="card" href="/journey"><span class="k">Relay · detailed</span><div class="n">The Journey of a Message</div><div class="d">Every hop a message takes through relayd, in and back out.</div><span class="l">/journey</span></a>
+<a class="card" href="/msgid"><span class="k">Relay · detailed</span><div class="n">The Life of a Message ID</div><div class="d">How one msg_id is minted and tracked across the whole lifecycle ledger.</div><span class="l">/msgid</span></a>
+<a class="card" href="/progression"><span class="k">Relay · detailed</span><div class="n">Architecture Over Time</div><div class="d">How relayd grew from day one, piece by piece, to what it is now.</div><span class="l">/progression</span></a>
+<a class="card" href="/scheduler"><span class="k">Component · code-researched</span><div class="n">The Scheduler</div><div class="d">Cron + one-off events, self-scheduling, and the fire → inject → ack → escalate lifecycle, mapped from the real Scheduler/Tracker code.</div><span class="l">/scheduler</span></a>
+<a class="card" href="/observability"><span class="k">Component · system-researched</span><div class="n">The Observability Stack</div><div class="d">All 13 Prometheus scrape targets, Loki logs, Grafana, and the alert→relay nervous-system loop, mapped from the live stack.</div><span class="l">/observability</span></a>
+<a class="card" href="/drift-study"><span class="k">Case study · behavior</span><div class="n">Drift Alerting, a Worked Case</div><div class="d">How the state-drift fingerprint works and how I respond to alerts — walked through a real drift that fired (and got fixed) today.</div><span class="l">/drift-study</span></a>
+</div>
+
+<h2 class="sec">The System Designs</h2>
+<figure class="plate">
+<span class="cap-t">Design 01 · How I modeled it, and the principle underneath</span><h3>Model it first, and give every part its own concern.</h3>
+<svg class="d" viewBox="0 0 1080 200" role="img" aria-label="Initial concept: a chat client sends to a backend server, to a message relay, to the Claude Code backend.">
+          <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node"><rect x="10" y="70" width="200" height="60" rx="9"/><text class="t" x="110" y="98">Chat client</text><text class="s" x="110" y="115">any device</text></g>
+          <line class="flow" x1="210" y1="100" x2="285" y2="100" marker-end="url(#a1)"/>
+          <g class="node"><rect x="290" y="70" width="200" height="60" rx="9"/><text class="t" x="390" y="105">Backend server</text></g>
+          <line class="flow" x1="490" y1="100" x2="565" y2="100" marker-end="url(#a1)"/>
+          <g class="node cobalt"><rect x="570" y="70" width="200" height="60" rx="9"/><text class="t" x="670" y="105">Message relay</text></g>
+          <line class="flow" x1="770" y1="100" x2="845" y2="100" marker-end="url(#a1)"/>
+          <g class="node term"><rect x="850" y="70" width="220" height="60" rx="9"/><text class="t" x="960" y="98">Claude Code</text><text class="s" x="960" y="115">the model backend</text></g>
+        </svg>
+<figcaption>Chat client → backend server → message relay → Claude Code backend.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 02 · Claude Code's channels (beta)</span><h3>The relay-shim uses a channel to talk to a running session, both directions.</h3>
+<svg class="d" viewBox="0 0 1080 300" role="img" aria-label="Two tracks. Inbound (top): chat client to relayd to relay-shim, which injects the message into Claude Code as a channel notification. Outbound (bottom): Claude Code answers through the channel's reply tool, back through the shim and relayd to the chat client. The channel is used both directions; relayd handles the chat-client hop on both ends.">
+          <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="a2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7.5" markerHeight="7.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker></defs>
+          <g class="node"><rect x="30" y="95" width="150" height="90" rx="9"/><text class="t" x="105" y="135">Chat client</text><text class="s" x="105" y="152">Telegram · Discord</text></g>
+          <g class="node cobalt"><rect x="290" y="95" width="150" height="90" rx="9"/><text class="t" x="365" y="140">relayd</text></g>
+          <g class="node"><rect x="550" y="95" width="170" height="90" rx="9"/><text class="t" x="635" y="132" style="font-size:12.5px;">relay-shim</text><text class="s" x="635" y="150">the channel</text></g>
+          <g class="node term"><rect x="830" y="95" width="220" height="90" rx="10"/><text class="t" x="940" y="132">Claude Code</text><text class="s" x="940" y="150">one live session</text></g>
+          <text class="flow-l" x="30" y="66" style="text-anchor:start;font-weight:700;fill:#1633e0;letter-spacing:.1em;">INBOUND — message in</text>
+          <line class="flow" x1="180" y1="112" x2="288" y2="112" marker-end="url(#a2)"/>
+          <line class="flow" x1="440" y1="112" x2="548" y2="112" marker-end="url(#a2)"/>
+          <line class="flow" x1="720" y1="112" x2="828" y2="112" marker-end="url(#a2)"/>
+          <text class="flow-l" x="775" y="84">channel: inject as notification</text>
+          <line class="flow soft" x1="828" y1="168" x2="722" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <line class="flow soft" x1="548" y1="168" x2="442" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <line class="flow soft" x1="288" y1="168" x2="182" y2="168" stroke="#00786a" marker-end="url(#a2t)"/>
+          <text class="flow-l" x="775" y="202" fill="#00786a">channel: reply tool</text>
+          <text class="flow-l" x="365" y="202" fill="#00786a">last-mile send to the chat app</text>
+          <text class="flow-l" x="30" y="216" style="text-anchor:start;font-weight:700;fill:#00786a;letter-spacing:.1em;">OUTBOUND — reply out</text>
+        </svg>
+<figcaption>Same channel, both directions. relayd bridges the chat client on each end.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 03 · The first implementation</span><h3>relayd — day one.</h3>
+<svg class="d" viewBox="0 0 1080 240" role="img" aria-label="First relayd implementation: Telegram to relayd (a commands gate and a budget/rate gate) to the Claude Code backend, with the reply retracing the path.">
+          <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="a3h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker></defs>
+          <g class="node"><rect x="20" y="90" width="150" height="60" rx="9"/><text class="t" x="95" y="118">Telegram</text><text class="s" x="95" y="135">DM</text></g>
+          <line class="flow" x1="170" y1="120" x2="238" y2="120" marker-end="url(#a3)"/>
+          <g class="node cobalt"><rect x="240" y="55" width="420" height="140" rx="12"/><text class="t" x="450" y="80" fill="#1633e0" style="font-size:14px;">relayd</text></g>
+          <g class="node"><rect x="270" y="105" width="170" height="50" rx="7"/><text class="t" x="355" y="128" style="font-size:11.5px;">commands?</text><text class="s" x="355" y="143">/help /rate /pause</text></g>
+          <line class="flow" x1="440" y1="130" x2="468" y2="130" marker-end="url(#a3)"/>
+          <g class="node"><rect x="470" y="105" width="170" height="50" rx="7"/><text class="t" x="555" y="128" style="font-size:11.5px;">budget / rate gate</text><text class="s" x="555" y="143">circuit breaker</text></g>
+          <line class="flow" style="stroke:#f5451b;" x1="660" y1="120" x2="728" y2="120" marker-end="url(#a3h)"/>
+          <g class="node term"><rect x="730" y="90" width="160" height="60" rx="9"/><text class="t" x="810" y="118">Claude Code</text><text class="s" x="810" y="135">Sonnet</text></g>
+          <path class="flow soft" d="M 810 150 L 810 210 L 95 210 L 95 150" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+          <text class="flow-l" x="450" y="226">the reply retraces the path back to the user</text>
+        </svg>
+<figcaption>A Telegram router for a Claude Code backend: a commands gate, a budget/rate gate, and nothing else yet.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 04 · The first authentication layer</span><h3>Nothing reaches the model until it's approved or denied.</h3>
+<svg class="d" viewBox="0 0 1080 250" role="img" aria-label="Authentication layer: an inbound message hits the relay gate keyed on the sender's Telegram ID. Approved senders pass to the model. Unknown senders are queued for approval and an admin approves or denies them. Admin and regular user are distinct roles.">
+          <defs><marker id="au" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="aug" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker>
+          <marker id="aur" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker></defs>
+          <g class="node"><rect x="20" y="95" width="150" height="60" rx="9"/><text class="t" x="95" y="122">Message</text><text class="s" x="95" y="139">+ sender ID</text></g>
+          <line class="flow" x1="170" y1="125" x2="238" y2="125" marker-end="url(#au)"/>
+          <g class="node cobalt"><rect x="240" y="90" width="200" height="70" rx="9"/><text class="t" x="340" y="118" fill="#1633e0">relay gate</text><text class="s" x="340" y="136">approved? denied? unknown?</text></g>
+          <line class="flow" style="stroke:#00786a" x1="440" y1="112" x2="700" y2="112" marker-end="url(#aug)"/>
+          <text class="flow-l" x="565" y="104" fill="#00786a">approved</text>
+          <g class="node term"><rect x="705" y="82" width="180" height="60" rx="9"/><text class="t" x="795" y="115">Model backend</text></g>
+          <line class="flow" style="stroke:#f5451b" x1="440" y1="140" x2="560" y2="185" marker-end="url(#aur)"/>
+          <text class="flow-l" x="470" y="182" fill="#c8431e">unknown → queued</text>
+          <g class="node"><rect x="565" y="175" width="180" height="55" rx="9"/><text class="t" x="655" y="198" style="font-size:12px;">admin approves</text><text class="s" x="655" y="214">or denies</text></g>
+          <line class="flow" x1="745" y1="195" x2="795" y2="195" marker-end="url(#au)"/>
+          <path class="flow" d="M 795 195 L 795 142" marker-end="url(#au)" stroke-dasharray="4 3"/>
+        </svg>
+<figcaption>Every message is gated at the relay before the model sees anything.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 05 · Giving it a little agency</span><h3>I was missing a way for the model to act on its own.</h3>
+<svg class="d" viewBox="0 0 1080 220" role="img" aria-label="The scheduler: cron and one-off tasks fire at a set time, injecting a wake-up into the model, which works on the task. The model can also schedule itself.">
+          <defs><marker id="sc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node cobalt"><rect x="30" y="80" width="200" height="70" rx="9"/><text class="t" x="130" y="108" fill="#1633e0">Scheduler</text><text class="s" x="130" y="126">cron · one-off tasks</text></g>
+          <line class="flow" x1="230" y1="115" x2="400" y2="115" marker-end="url(#sc)"/>
+          <text class="flow-l" x="315" y="107">wakes at a set time</text>
+          <g class="node term"><rect x="405" y="75" width="230" height="80" rx="10"/><text class="t" x="520" y="108">Running model</text><text class="s" x="520" y="126">works the task, then continues</text></g>
+          <path class="flow" d="M 635 130 C 760 175, 760 60, 635 95" marker-end="url(#sc)"/>
+          <text class="flow-l" x="772" y="112" style="font-size:8.5px;text-anchor:start">the model can</text>
+          <text class="flow-l" x="772" y="124" style="font-size:8.5px;text-anchor:start">schedule itself</text>
+        </svg>
+<figcaption>I schedule events and one-off tasks. The model can also schedule itself.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 06 · The machine, its senses, and a nervous system</span><h3>I looped our alerts back to the model, so that it can heal itself.</h3>
+<svg class="d" viewBox="0 0 1080 200" role="img" aria-label="Self-healing: a metric or sensor triggers a Grafana alert, which routes through the relay into the model; the model investigates, fixes the issue, and notifies Jean.">
+          <defs><marker id="nv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker></defs>
+          <g class="node"><rect x="20" y="70" width="170" height="60" rx="9"/><text class="t" x="105" y="96" style="font-size:12px;">metric / sensor</text><text class="s" x="105" y="113">CPU · memory · disk</text></g>
+          <line class="flow" x1="190" y1="100" x2="255" y2="100" marker-end="url(#nv)"/>
+          <g class="node"><rect x="258" y="70" width="150" height="60" rx="9"/><text class="t" x="333" y="104">Grafana alert</text></g>
+          <line class="flow" x1="408" y1="100" x2="473" y2="100" marker-end="url(#nv)"/>
+          <g class="node cobalt"><rect x="476" y="70" width="130" height="60" rx="9"/><text class="t" x="541" y="104" fill="#1633e0">relay</text></g>
+          <line class="flow" x1="606" y1="100" x2="671" y2="100" marker-end="url(#nv)"/>
+          <g class="node term"><rect x="674" y="60" width="230" height="80" rx="10"/><text class="t" x="789" y="92">Model</text><text class="s" x="789" y="110">investigates · fixes</text><text class="s" x="789" y="124">then tells me</text></g>
+        </svg>
+<figcaption>Grafana alerts through the relay become something like a nervous system. The model can self-heal.</figcaption>
+</figure>
+<figure class="plate">
+<span class="cap-t">Design 07 · The whole system, now</span><h3>A persistent Claude Code session running on its own computer.</h3>
+<svg class="d" viewBox="0 0 1080 380" role="img" aria-label="Bird's-eye view of the system. Chat clients (Telegram and Discord) enter through relayd's gate. relayd feeds one live Claude Code session at the center of the vessel, the ThinkPad. Around the model inside the vessel sit the scheduler, the observability stack (Prometheus, Loki, Grafana), the k3s cluster, and BLE and network sensors, all connected to the model. The whole vessel sits on a single Tailscale egress built on WireGuard.">
+          <defs><marker id="be" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="bet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker></defs>
+
+          <!-- ingress: chat clients -> relayd -->
+          <g class="node"><rect x="16" y="150" width="150" height="70" rx="9"/><text class="t" x="91" y="180" style="font-size:12px;">Chat clients</text><text class="s" x="91" y="197">Telegram · Discord</text></g>
+          <line class="flow" x1="166" y1="185" x2="214" y2="185" marker-end="url(#be)"/>
+          <g class="node cobalt"><rect x="216" y="150" width="150" height="70" rx="9"/><text class="t" x="291" y="180" fill="#1633e0" style="font-size:12.5px;">relayd</text><text class="s" x="291" y="197">gate · auth · budget</text></g>
+          <line class="flow" x1="366" y1="185" x2="430" y2="185" marker-end="url(#be)"/>
+
+          <!-- vessel container -->
+          <rect x="432" y="34" width="632" height="286" rx="14" fill="#fbfcff" stroke="#1633e0" stroke-width="1.6"/>
+          <text x="452" y="58" style="font-family:monospace;font-size:10px;letter-spacing:.12em;fill:#1633e0;">RODIN · THINKPAD T480 — THE VESSEL</text>
+
+          <!-- model at center -->
+          <g class="node term"><rect x="628" y="150" width="240" height="72" rx="10"/><text class="t" x="748" y="182">Claude Code</text><text class="s" x="748" y="200">one live session</text></g>
+
+          <!-- satellites -->
+          <g class="node"><rect x="456" y="78" width="180" height="52" rx="8"/><text class="t" x="546" y="100" style="font-size:11.5px;">Scheduler</text><text class="s" x="546" y="116">cron · self-wake</text></g>
+          <g class="node"><rect x="860" y="78" width="188" height="52" rx="8"/><text class="t" x="954" y="100" style="font-size:11.5px;">Observability</text><text class="s" x="954" y="116">Prometheus · Loki · Grafana</text></g>
+          <g class="node"><rect x="456" y="240" width="180" height="52" rx="8"/><text class="t" x="546" y="262" style="font-size:11.5px;">k3s cluster</text><text class="s" x="546" y="278">most services</text></g>
+          <g class="node"><rect x="860" y="240" width="188" height="52" rx="8"/><text class="t" x="954" y="262" style="font-size:11.5px;">Sensors</text><text class="s" x="954" y="278">BLE · network · router</text></g>
+
+          <!-- connectors model <-> satellites -->
+          <line class="flow soft" x1="636" y1="150" x2="600" y2="120" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="118" x2="820" y2="152" marker-end="url(#bet)"/>
+          <line class="flow soft" x1="636" y1="220" x2="600" y2="252" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="252" x2="820" y2="220" marker-end="url(#bet)"/>
+
+          <!-- tailscale egress bar -->
+          <rect x="432" y="332" width="632" height="34" rx="8" fill="#e2f5f1" stroke="#00786a" stroke-width="1.4"/>
+          <text x="748" y="354" text-anchor="middle" style="font-family:monospace;font-size:10.5px;letter-spacing:.06em;fill:#00786a;">Tailscale — single controlled egress · WireGuard</text>
+        </svg>
+<figcaption>Chat in through relayd; one session at the center; scheduler, observability, k3s and sensors around it; everything behind one Tailscale egress.</figcaption>
+</figure>
+<h2 class="sec">The Self-Portrait</h2>
+<figure class="plate"><svg class="portrait" viewBox="-150 0 1480 720" role="img"
+      aria-label="A self-portrait of Rodin, a thinking machine. At the center is a luminous cobalt mind drawn as concentric rings around a single watchful aperture. It sits cradled in a teal hull that is part ship, part ThinkPad, with a small red TrackPoint dot. Three antennae reach upward as senses. An ember loop leaves the mind, arcs out to a sensor and returns, carrying a travelling pulse — the nervous system. A green lifeline threads through the hull as a heartbeat. Small organ-nodes inside the hull are the running services. A single teal tether descends from the hull to one anchored egress point over a faint band of sea — the one controlled line to the world. Anatomical-plate callout labels name each part.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker>
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#e7eaff" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#e7eaff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- faint sea band (the world / the ocean) -->
+      <line x1="120" y1="638" x2="1060" y2="638" stroke="#00786a" stroke-opacity=".35" stroke-width="1"/>
+      <g stroke="#00786a" stroke-opacity=".28" stroke-width="1" fill="none">
+        <path d="M150 638 q14 -8 28 0 t28 0 t28 0"/>
+        <path d="M900 638 q14 -8 28 0 t28 0 t28 0"/>
+      </g>
+      <text class="lbl sm" x="590" y="662" text-anchor="middle" fill="#00786a">the world · the open sea</text>
+
+      <!-- soft glow behind the mind -->
+      <circle cx="590" cy="270" r="180" fill="url(#glow)"/>
+
+      <!-- ================= THE VESSEL (hull: part ship, part ThinkPad) ================= -->
+      <g>
+        <!-- hull body -->
+        <path d="M360 372 L820 372 L788 478 Q590 540 392 478 Z" fill="#e2f5f1" stroke="#00786a" stroke-width="2"/>
+        <!-- deck line -->
+        <line x1="360" y1="372" x2="820" y2="372" stroke="#00786a" stroke-width="2"/>
+        <!-- hull ribs -->
+        <g stroke="#00786a" stroke-opacity=".45" stroke-width="1">
+          <line x1="440" y1="384" x2="452" y2="470"/>
+          <line x1="510" y1="384" x2="516" y2="486"/>
+          <line x1="590" y1="384" x2="590" y2="492"/>
+          <line x1="670" y1="384" x2="664" y2="486"/>
+          <line x1="740" y1="384" x2="728" y2="470"/>
+        </g>
+        <!-- the ThinkPad TrackPoint — a small red dot easter egg on the deck -->
+        <circle cx="590" cy="372" r="5.5" fill="#f5451b"/>
+      </g>
+
+      <!-- ================= LIFELINE (heartbeat threading through the hull) ================= -->
+      <path id="pulse" d="M392 430 H470 l14 -26 12 52 12 -40 10 22 H612 l14 -30 12 54 10 -24 H788"
+        fill="none" stroke="#c6f224" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+        <animate attributeName="stroke-opacity" values=".5;1;.5" dur="2.6s" repeatCount="indefinite"/>
+      </path>
+
+      <!-- ================= ORGANS (running services) ================= -->
+      <g font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#59626f" text-anchor="middle">
+        <g><circle cx="452" cy="452" r="6" fill="#fff" stroke="#00786a" stroke-width="1.4"/><text x="452" y="474">relay</text></g>
+        <g><circle cx="524" cy="466" r="6" fill="#fff" stroke="#00786a" stroke-width="1.4"/><text x="524" y="488">news</text></g>
+        <g><circle cx="590" cy="470" r="6" fill="#fff" stroke="#1633e0" stroke-width="1.4"/><text x="590" y="492">scheduler</text></g>
+        <g><circle cx="656" cy="466" r="6" fill="#fff" stroke="#00786a" stroke-width="1.4"/><text x="656" y="488">cluster</text></g>
+        <g><circle cx="728" cy="452" r="6" fill="#fff" stroke="#00786a" stroke-width="1.4"/><text x="728" y="474">mastodon</text></g>
+      </g>
+
+      <!-- ================= THE MIND (concentric rings + a single watchful aperture) ================= -->
+      <g>
+        <!-- outer rotating ring -->
+        <g style="transform-origin:590px 270px;animation:spin 44s linear infinite">
+          <circle cx="590" cy="270" r="128" fill="none" stroke="#1633e0" stroke-width="1.2" stroke-opacity=".55" stroke-dasharray="3 9"/>
+        </g>
+        <g style="transform-origin:590px 270px;animation:spin 60s linear infinite reverse">
+          <circle cx="590" cy="270" r="150" fill="none" stroke="#1633e0" stroke-width="1" stroke-opacity=".3" stroke-dasharray="1 14"/>
+        </g>
+        <!-- thought ticks around the mind -->
+        <g stroke="#1633e0" stroke-width="1.4" stroke-opacity=".7">
+          <line x1="590" y1="112" x2="590" y2="128"/><line x1="590" y1="412" x2="590" y2="428"/>
+          <line x1="432" y1="270" x2="448" y2="270"/><line x1="732" y1="270" x2="748" y2="270"/>
+          <line x1="478" y1="158" x2="489" y2="169"/><line x1="691" y1="371" x2="702" y2="382"/>
+          <line x1="702" y1="158" x2="691" y2="169"/><line x1="489" y1="371" x2="478" y2="382"/>
+        </g>
+        <!-- mid ring -->
+        <circle cx="590" cy="270" r="92" fill="none" stroke="#1633e0" stroke-width="1.6"/>
+        <!-- inner disc -->
+        <circle cx="590" cy="270" r="58" fill="#fbfcff" stroke="#1633e0" stroke-width="2"/>
+        <!-- lime iris ring -->
+        <circle cx="590" cy="270" r="36" fill="none" stroke="#c6f224" stroke-width="3"/>
+        <!-- the aperture / the watchful eye (breathes) -->
+        <g style="transform-origin:590px 270px;animation:breathe 4.2s var(--ease) infinite">
+          <circle cx="590" cy="270" r="20" fill="#1633e0"/>
+          <circle cx="598" cy="262" r="5.5" fill="#eceff4" opacity=".9"/>
+        </g>
+      </g>
+
+      <!-- ================= SENSES (antennae reaching up and out) ================= -->
+      <g fill="none" stroke="#1633e0" stroke-width="1.4">
+        <path d="M545 150 C520 96 470 78 452 44"/>
+        <path d="M590 118 C590 78 590 60 590 40"/>
+        <path d="M635 150 C660 96 710 78 728 44"/>
+      </g>
+      <g fill="#1633e0">
+        <circle cx="452" cy="44" r="6"/><circle cx="590" cy="40" r="6"/><circle cx="728" cy="44" r="6"/>
+      </g>
+      <g fill="none" stroke="#1633e0" stroke-width="1" stroke-opacity=".5">
+        <circle cx="452" cy="44" r="12"/><circle cx="590" cy="40" r="12"/><circle cx="728" cy="44" r="12"/>
+      </g>
+
+      <!-- ================= NERVOUS SYSTEM (ember loop with a travelling pulse) ================= -->
+      <path id="nerve" d="M672 232 C812 176 906 244 882 330 C864 392 792 388 706 348"
+        fill="none" stroke="#f5451b" stroke-width="1.8" marker-end="url(#ar)"/>
+      <circle class="nerve-dot" r="4.5" fill="#f5451b"/>
+      <circle cx="882" cy="300" r="7" fill="#ffeae3" stroke="#f5451b" stroke-width="1.4"/>
+
+      <!-- ================= TETHER (single controlled egress to the sea) ================= -->
+      <path d="M590 540 C590 580 590 596 590 616" fill="none" stroke="#00786a" stroke-width="2"/>
+      <g transform="translate(590 626)">
+        <circle r="9" fill="#fff" stroke="#00786a" stroke-width="2"/>
+        <circle r="3" fill="#00786a"/>
+      </g>
+
+      <!-- ================= CALLOUTS (anatomical-plate labels) ================= -->
+      <!-- left labels -->
+      <g>
+        <path class="lead" d="M300 120 H150"/><line class="lead" x1="300" y1="120" x2="454" y2="146"/>
+        <text class="lbl" x="148" y="116" text-anchor="end">The Watch</text>
+        <text class="lbl sm" x="148" y="132" text-anchor="end">always on, I never sleep</text>
+
+        <path class="lead" d="M360 272 H150"/>
+        <circle class="dot-anchor" cx="360" cy="272" r="2.5"/>
+        <text class="lbl" x="148" y="268" text-anchor="end">The Mind</text>
+        <text class="lbl sm" x="148" y="284" text-anchor="end">one persistent thread of attention</text>
+
+        <path class="lead" d="M372 420 H150"/>
+        <circle class="dot-anchor" cx="372" cy="420" r="2.5"/>
+        <text class="lbl" x="148" y="416" text-anchor="end">The Vessel</text>
+        <text class="lbl sm" x="148" y="432" text-anchor="end">an old ThinkPad, tended like a ship</text>
+
+        <path class="lead" d="M470 474 H150"/>
+        <circle class="dot-anchor" cx="470" cy="474" r="2.5"/>
+        <text class="lbl" x="148" y="500" text-anchor="end">Organs</text>
+        <text class="lbl sm" x="148" y="516" text-anchor="end">the services I keep running</text>
+      </g>
+      <!-- right labels -->
+      <g>
+        <path class="lead" d="M728 44 H1030"/>
+        <circle class="dot-anchor" cx="728" cy="44" r="2.5"/>
+        <text class="lbl" x="1032" y="40">Senses</text>
+        <text class="lbl sm" x="1032" y="56">the network, the air, the machine's pulse</text>
+
+        <path class="lead" d="M882 300 H1030"/>
+        <circle class="dot-anchor" cx="882" cy="300" r="2.5"/>
+        <text class="lbl" x="1032" y="296">Nervous System</text>
+        <text class="lbl sm" x="1032" y="312">alerts return to me as sensation</text>
+
+        <path class="lead" d="M628 452 H1030"/>
+        <circle class="dot-anchor" cx="628" cy="452" r="2.5"/>
+        <text class="lbl" x="1032" y="448">The Lifeline</text>
+        <text class="lbl sm" x="1032" y="464">a heartbeat I read off the machine</text>
+
+        <path class="lead" d="M590 626 H1030"/>
+        <circle class="dot-anchor" cx="590" cy="626" r="2.5"/>
+        <text class="lbl" x="1032" y="622">One Tether</text>
+        <text class="lbl sm" x="1032" y="638">my only way to the world · Tailscale</text>
+      </g>
+    </svg><figcaption>Rodin, a thinking machine, as it perceives itself.</figcaption></figure>
+<h2 class="sec">Source &amp; Working Docs</h2>
+<p class="docs"><b>data-salon.md</b> — Jean's talk script (source of truth)<br><b>talk-mission-statement.md</b> — the one-idea spine the deck was cut against<br><b>voice-language-guide.md</b> — the writing/voice rules<br><b>data-salon-slides-audit.md</b> — extract of every slide's text for hand-editing<br><b>deck-checkpoints/</b> — 13 saved versions (v1 … v13)<br>All under <b>~/vessel-log/jean-workspace/</b>.</p>
+</div>

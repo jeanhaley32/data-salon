@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rodin — an interactive tour</title>
+<style>
+  /* ── PALETTE — "Cobalt Plate" (house style) ─────────────────────── */
+  :root {
+    --paper: #eceff4;
+    --plate: #ffffff;
+    --vellum: #f7f9fc;
+    --line: #dce1ea;
+    --rule-strong: #c3cad6;
+    --ink: #0e1116;
+    --graphite: #59626f;
+    --cobalt: #1633e0;
+    --wash: #e7eaff;
+    --ember: #f5451b;
+    --ash: #ffeae3;
+    --lime: #c6f224;
+    --teal: #00786a;
+    --teal-soft: #e2f5f1;
+    --shadow: 0 1px 0 rgba(14,17,22,0.04), 0 2px 4px rgba(14,17,22,0.03), 0 24px 48px -20px rgba(22,51,224,0.16);
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+    --ease: cubic-bezier(.16,.84,.44,1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; color: var(--ink); font-family: var(--sans);
+    overflow-x: hidden; min-height: 100%;
+    background:
+      linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--paper);
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────── */
+  header { padding: 2.6rem 5vw 1.2rem; max-width: 1320px; margin: 0 auto; }
+  .rule-top {
+    height: 3px; width: 100%;
+    background: linear-gradient(to right, var(--cobalt) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%);
+    margin-bottom: 1.15rem;
+  }
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem 2rem; }
+  .brand { display: flex; align-items: center; gap: 0.8rem; }
+  .brand-mark {
+    width: 30px; height: 30px; flex: none; background: var(--cobalt);
+    display: flex; align-items: center; justify-content: center;
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+  }
+  .brand-mark svg { width: 17px; height: 17px; }
+  .wordmark { font-family: var(--display); font-size: 1.5rem; letter-spacing: -0.02em; }
+  .wordmark b { font-weight: 400; }
+  .tagline { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graphite); margin-top: 0.2rem; }
+  .masthead-meta { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); text-align: right; line-height: 1.7; }
+  .masthead-meta em { font-style: normal; color: var(--ink); }
+
+  main { max-width: 1320px; margin: 0 auto; padding: 0 5vw 4rem; }
+
+  /* ── Hero thesis ────────────────────────────────────────────── */
+  .hero { padding: 1.5rem 0 2.4rem; max-width: 60rem; }
+  .hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.04; letter-spacing: -0.025em; margin: 0 0 1rem; }
+  .hero h1 em { font-style: italic; color: var(--cobalt); }
+  .hero p { font-size: clamp(1rem, 1.5vw, 1.18rem); line-height: 1.6; color: var(--graphite); margin: 0; }
+  .hero .lede-mark { color: var(--ink); font-weight: 600; }
+
+  /* ── Guided-tour controls ───────────────────────────────────── */
+  .tourbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
+    padding: 0.8rem 1rem; margin: 0 0 2rem;
+    background: rgba(255,255,255,0.86); backdrop-filter: blur(8px);
+    border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  }
+  .tourbar .label { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); }
+  .tourbar button {
+    appearance: none; border: 1px solid var(--rule-strong); background: var(--vellum); color: var(--ink);
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-radius: 8px; cursor: pointer; transition: all 150ms var(--ease);
+  }
+  .tourbar button:hover:not(:disabled) { border-color: var(--cobalt); color: var(--cobalt); transform: translateY(-1px); }
+  .tourbar button.primary { background: var(--cobalt); color: #fff; border-color: var(--cobalt); }
+  .tourbar button.primary:hover { background: #0f27b8; color: #fff; }
+  .tourbar button:disabled { opacity: 0.35; cursor: default; }
+  .tourbar .progress { flex: 1; min-width: 120px; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .tourbar .progress > i { display: block; height: 100%; width: 0; background: linear-gradient(to right, var(--cobalt), var(--lime)); transition: width 400ms var(--ease); }
+  .tourbar .counter { font-family: var(--mono); font-size: 0.72rem; color: var(--graphite); font-variant-numeric: tabular-nums; }
+
+  /* ── System map ─────────────────────────────────────────────── */
+  .map-wrap { background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); position: relative; padding: 1.4rem 1.6rem; margin-bottom: 2.4rem; }
+  .map-wrap::before, .map-wrap::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  .map-wrap::before { top: -1px; left: -1px; border-top: 2px solid var(--cobalt); border-left: 2px solid var(--cobalt); }
+  .map-wrap::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cobalt); border-right: 2px solid var(--cobalt); }
+  .map-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.8rem; margin-bottom: 1.1rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .map-head h2 { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 0; letter-spacing: -0.015em; }
+  .map-head .hint { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); }
+  svg.map { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .layer rect { transition: fill 200ms var(--ease), stroke 200ms var(--ease); cursor: pointer; }
+  .layer .layer-bg { fill: var(--vellum); stroke: var(--rule-strong); stroke-width: 1.3; }
+  .layer:hover .layer-bg, .layer.active .layer-bg { fill: var(--wash); stroke: var(--cobalt); stroke-width: 1.8; }
+  .layer .layer-title { font-family: var(--display); font-size: 15px; fill: var(--ink); font-weight: 400; }
+  .layer .layer-sub { font-family: var(--mono); font-size: 8.5px; fill: var(--graphite); letter-spacing: 0.06em; text-transform: uppercase; }
+  .layer.active .layer-title { fill: var(--cobalt); }
+  .chip rect { cursor: pointer; transition: fill 150ms var(--ease), stroke 150ms var(--ease); }
+  .chip .chip-bg { fill: var(--plate); stroke: var(--rule-strong); stroke-width: 1.1; }
+  .chip:hover .chip-bg, .chip.active .chip-bg { fill: var(--cobalt); stroke: var(--cobalt); }
+  .chip text { font-family: var(--sans); font-size: 10px; fill: var(--ink); font-weight: 600; pointer-events: none; }
+  .chip:hover text, .chip.active text { fill: #fff; }
+  .chip.term .chip-bg { stroke: var(--teal); }
+  .chip.term:hover .chip-bg, .chip.term.active .chip-bg { fill: var(--teal); stroke: var(--teal); }
+  .chip.hot .chip-bg { stroke: var(--ember); }
+  .chip.hot:hover .chip-bg, .chip.hot.active .chip-bg { fill: var(--ember); stroke: var(--ember); }
+  .flow { stroke: var(--rule-strong); stroke-width: 1.5; fill: none; }
+  .flow.hot { stroke: var(--ember); stroke-width: 1.8; }
+  .flow-label { font-family: var(--mono); font-size: 8px; fill: var(--graphite); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ── Detail panel ───────────────────────────────────────────── */
+  .detail { background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); position: relative; min-height: 220px; padding: 1.6rem 1.8rem; margin-bottom: 2.4rem; }
+  .detail::before { content: ""; position: absolute; top: -1px; left: -1px; width: 14px; height: 14px; border-top: 2px solid var(--lime); border-left: 2px solid var(--lime); }
+  .detail .eyebrow { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cobalt); margin: 0 0 0.4rem; }
+  .detail h3 { font-family: var(--display); font-weight: 400; font-size: 1.6rem; margin: 0 0 0.9rem; letter-spacing: -0.015em; }
+  .detail .body { font-size: 0.97rem; line-height: 1.62; color: var(--ink); max-width: 60rem; }
+  .detail .body p { margin: 0 0 0.9rem; }
+  .detail .body strong { font-weight: 650; }
+  .detail .body code { font-family: var(--mono); font-size: 0.86em; background: var(--vellum); border: 1px solid var(--line); padding: 0.05em 0.35em; border-radius: 4px; }
+  .detail .facts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.1rem 0 0; }
+  .detail .fact { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.04em; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--line); background: var(--vellum); color: var(--graphite); }
+  .detail .fact b { color: var(--ink); font-weight: 600; }
+  .detail .swap-in { animation: swap 420ms var(--ease) both; }
+  @keyframes swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .detail .placeholder { color: var(--graphite); font-style: italic; }
+
+  /* ── Footer ─────────────────────────────────────────────────── */
+  footer { max-width: 1320px; margin: 0 auto; padding: 1.5rem 5vw 3rem; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--graphite); border-top: 1px solid var(--line); }
+  footer b { color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { *, .detail .swap-in { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="rule-top"></div>
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-7 4 14 2-9 2 4h2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>
+        <div class="wordmark"><b>Rodin</b></div>
+        <div class="tagline">A thinking machine on a ThinkPad</div>
+      </div>
+    </div>
+    <div class="masthead-meta">
+      <div><em>Interactive System Tour</em></div>
+      <div>Tailnet-only · Verified live</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>One laptop that <em>watches itself</em>, heals itself, and knows the world around it.</h1>
+    <p><span class="lede-mark">Rodin is a headless AI agent living on an always-on ThinkPad T480,</span> reachable only over a private Tailscale tunnel. It began as a plain message relay to a language model. It grew — one real problem at a time — into a self-hosted platform that monitors its own hardware, runs a Kubernetes cluster, indexes email into a vector database, watches the home network for devices phoning home, and routes its own alerts back through the model so the machine can react to events and report in. This is a tour of what's actually running. Every claim here was read off the live system.</p>
+  </section>
+
+  <div class="tourbar">
+    <span class="label">Guided tour</span>
+    <button id="tourPrev" disabled>‹ Back</button>
+    <button id="tourNext" class="primary">Start →</button>
+    <div class="progress"><i id="tourFill"></i></div>
+    <span class="counter" id="tourCounter">0 / 7</span>
+    <button id="tourExit" style="margin-left:auto">Free explore</button>
+  </div>
+
+  <div class="map-wrap">
+    <div class="map-head">
+      <h2>The system, in four layers</h2>
+      <span class="hint">Click any component ↓</span>
+    </div>
+    <svg class="map" viewBox="0 0 1100 560" role="img" aria-label="Layered system map of Rodin. Four horizontal layers — the relay, the observability stack, the self-healing loop, and world and network awareness — each containing clickable components.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c3cad6"/></marker>
+        <marker id="arh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5451b"/></marker>
+      </defs>
+
+      <!-- LAYER 1: RELAY -->
+      <g class="layer" id="L-relay" data-detail="relay" tabindex="0" role="button" aria-label="The relay layer">
+        <rect class="layer-bg" x="20" y="20" width="1060" height="120" rx="10"/>
+        <text class="layer-title" x="40" y="48">The Relay</text>
+        <text class="layer-sub" x="40" y="64">how people reach the machine</text>
+      </g>
+      <g class="chip hot" data-detail="telegram" tabindex="0" role="button" aria-label="Telegram and Discord frontends"><rect class="chip-bg" x="300" y="46" width="150" height="34" rx="7"/><text x="375" y="67" text-anchor="middle">Telegram · Discord</text></g>
+      <g class="chip" data-detail="relayd" tabindex="0" role="button" aria-label="relayd gate chain"><rect class="chip-bg" x="480" y="46" width="150" height="34" rx="7"/><text x="555" y="67" text-anchor="middle">relayd gate chain</text></g>
+      <g class="chip term" data-detail="claude" tabindex="0" role="button" aria-label="Claude Code backend"><rect class="chip-bg" x="660" y="46" width="150" height="34" rx="7"/><text x="735" y="67" text-anchor="middle">Claude Code</text></g>
+      <g class="chip" data-detail="scheduler" tabindex="0" role="button" aria-label="Scheduler"><rect class="chip-bg" x="840" y="46" width="150" height="34" rx="7"/><text x="915" y="67" text-anchor="middle">Scheduler</text></g>
+
+      <!-- LAYER 2: OBSERVABILITY -->
+      <g class="layer" id="L-obs" data-detail="observability" tabindex="0" role="button" aria-label="The observability layer">
+        <rect class="layer-bg" x="20" y="160" width="1060" height="120" rx="10"/>
+        <text class="layer-title" x="40" y="188">Observability</text>
+        <text class="layer-sub" x="40" y="204">what the machine measures about itself</text>
+      </g>
+      <g class="chip" data-detail="signals" tabindex="0" role="button" aria-label="Signal collectors"><rect class="chip-bg" x="300" y="186" width="150" height="34" rx="7"/><text x="375" y="207" text-anchor="middle">~20 collectors</text></g>
+      <g class="chip" data-detail="prometheus" tabindex="0" role="button" aria-label="Prometheus and Loki"><rect class="chip-bg" x="480" y="186" width="150" height="34" rx="7"/><text x="555" y="207" text-anchor="middle">Prometheus · Loki</text></g>
+      <g class="chip" data-detail="grafana" tabindex="0" role="button" aria-label="Grafana dashboards"><rect class="chip-bg" x="660" y="186" width="150" height="34" rx="7"/><text x="735" y="207" text-anchor="middle">17 dashboards</text></g>
+      <g class="chip" data-detail="k3s" tabindex="0" role="button" aria-label="Kubernetes cluster"><rect class="chip-bg" x="840" y="186" width="150" height="34" rx="7"/><text x="915" y="207" text-anchor="middle">k3s cluster</text></g>
+
+      <!-- LAYER 3: SELF-HEALING -->
+      <g class="layer" id="L-heal" data-detail="selfheal" tabindex="0" role="button" aria-label="The self-healing layer">
+        <rect class="layer-bg" x="20" y="300" width="1060" height="120" rx="10"/>
+        <text class="layer-title" x="40" y="328">The Nervous System</text>
+        <text class="layer-sub" x="40" y="344">how alerts become judgment, not just pages</text>
+      </g>
+      <g class="chip hot" data-detail="webhook" tabindex="0" role="button" aria-label="Grafana alert webhook"><rect class="chip-bg" x="300" y="326" width="150" height="34" rx="7"/><text x="375" y="347" text-anchor="middle">alert → webhook</text></g>
+      <g class="chip" data-detail="judgment" tabindex="0" role="button" aria-label="Judgment layer"><rect class="chip-bg" x="480" y="326" width="150" height="34" rx="7"/><text x="555" y="347" text-anchor="middle">judgment layer</text></g>
+      <g class="chip" data-detail="recovery" tabindex="0" role="button" aria-label="Boot and crash recovery"><rect class="chip-bg" x="660" y="326" width="150" height="34" rx="7"/><text x="735" y="347" text-anchor="middle">auto-recovery</text></g>
+      <g class="chip" data-detail="drift" tabindex="0" role="button" aria-label="State drift detection"><rect class="chip-bg" x="840" y="326" width="150" height="34" rx="7"/><text x="915" y="347" text-anchor="middle">state drift</text></g>
+
+      <!-- LAYER 4: WORLD AWARENESS -->
+      <g class="layer" id="L-world" data-detail="world" tabindex="0" role="button" aria-label="The world-awareness layer">
+        <rect class="layer-bg" x="20" y="440" width="1060" height="120" rx="10"/>
+        <text class="layer-title" x="40" y="468">World &amp; Network Awareness</text>
+        <text class="layer-sub" x="40" y="484">what the machine senses beyond itself</text>
+      </g>
+      <g class="chip" data-detail="netcapture" tabindex="0" role="button" aria-label="Network capture"><rect class="chip-bg" x="300" y="466" width="150" height="34" rx="7"/><text x="375" y="487" text-anchor="middle">network capture</text></g>
+      <g class="chip" data-detail="email" tabindex="0" role="button" aria-label="Email vector index"><rect class="chip-bg" x="480" y="466" width="150" height="34" rx="7"/><text x="555" y="487" text-anchor="middle">email vector index</text></g>
+      <g class="chip" data-detail="sensors" tabindex="0" role="button" aria-label="Sensors and weather"><rect class="chip-bg" x="660" y="466" width="150" height="34" rx="7"/><text x="735" y="487" text-anchor="middle">sensors · weather</text></g>
+      <g class="chip" data-detail="services" tabindex="0" role="button" aria-label="Self-hosted services"><rect class="chip-bg" x="840" y="466" width="150" height="34" rx="7"/><text x="915" y="487" text-anchor="middle">self-hosted apps</text></g>
+
+      <!-- inter-layer flows -->
+      <path class="flow hot" d="M 190 140 L 190 160" marker-end="url(#arh)"/>
+      <path class="flow" d="M 150 280 L 150 300" marker-end="url(#ar)"/>
+      <path class="flow hot" d="M 230 420 L 230 440" marker-end="url(#arh)"/>
+      <text class="flow-label" x="205" y="154">messages</text>
+      <text class="flow-label" x="165" y="294">metrics</text>
+      <text class="flow-label" x="245" y="434">senses feed back up</text>
+    </svg>
+  </div>
+
+  <div class="detail" id="detail" aria-live="polite">
+    <p class="eyebrow" id="d-eyebrow">Begin here</p>
+    <h3 id="d-title">Pick a layer, or press Start</h3>
+    <div class="body" id="d-body"><p class="placeholder">Click any layer or component in the map above to read what it actually does — or run the guided tour to walk through Rodin end to end, from a message arriving to the machine sensing the room it's in.</p></div>
+    <div class="facts" id="d-facts"></div>
+  </div>
+</main>
+
+<footer>
+  <b>Rodin</b> — Lenovo ThinkPad T480 · Ubuntu 25.10 · reachable only over Tailscale · every figure in this tour was read from the live system, not reconstructed from memory. Known gaps are named where they exist.
+</footer>
+
+<script>
+const CONTENT = {
+  relay: {
+    eyebrow: "Layer 1 — The Relay",
+    title: "How a person reaches the machine",
+    body: `<p>The relay is the front door. A message from <strong>Telegram or Discord</strong> arrives at <code>relayd</code>, a custom Go daemon, which runs it through an ordered gate chain — lockdown check, tailnet session gate, anomaly/style-drift scoring, command dispatch, and a budget/token cap — before it reaches the <strong>Claude Code backend</strong> that decides how to respond. The reply retraces the same path back.</p><p>None of this was planned up front. Day one was a Telegram-only router. Admin roles, the tailnet trust gate, the second platform, and the anomaly detector each arrived because a real problem asked for them.</p>`,
+    facts: ["<b>relayd</b> · Go daemon", "<b>2</b> chat frontends", "<b>5-stage</b> gate chain", "backend: <b>Claude Code</b>"]
+  },
+  telegram: {
+    eyebrow: "Relay · Frontends",
+    title: "Telegram & Discord",
+    body: `<p>Two conversational surfaces into the same backend. Telegram came first; Discord was added later and is now where automated signals (alerts, digests, job-search) are routed, while Telegram stays for direct discourse.</p><p>Both are symmetric <code>relay.Endpoint</code> implementations — the daemon treats a frontend and the model backend as the same shape of thing, which is why adding a platform was additive rather than a rewrite.</p>`,
+    facts: ["Telegram · <b>discourse</b>", "Discord · <b>automation</b>", "symmetric <b>Endpoint</b> interface"]
+  },
+  relayd: {
+    eyebrow: "Relay · Core",
+    title: "The relayd gate chain",
+    body: `<p>Every inbound message passes an ordered series of gates before admission: <strong>lockdown → session gate → anomaly score → command dispatch → budget + per-chat token cap → admitted</strong>. The session gate is the security spine — admin-flagged actions require a bound Tailscale device to be online, so the killswitch is simply turning off Tailscale.</p><p>A short-lived <code>relay-shim</code> process bridges the daemon to Claude Code as an MCP server over a unix socket.</p>`,
+    facts: ["listens on <b>:9212</b>", "loopback webhook <b>:9210</b>", "tailnet-gated admin"]
+  },
+  claude: {
+    eyebrow: "Relay · Backend",
+    title: "Claude Code — the thinking part",
+    body: `<p>This is the part that reads, decides, and acts. It holds a persistent session that survives reboots, so context and running work continue across restarts. It has durable, passwordless sudo on the box and manages the system directly — writing code, fixing services, running the scheduled duties, and answering over the relay.</p>`,
+    facts: ["persistent session", "resumes after reboot", "direct system admin"]
+  },
+  scheduler: {
+    eyebrow: "Relay · Scheduler",
+    title: "The scheduler — a calendar the model keeps",
+    body: `<p>Born on day three of the project. It lets tasks fire at specific times, injected straight back into the live session: hourly pet-care checks, twice-daily news, daily email review, a daily Mastodon post, job-search ingest, GitHub review passes, and one-off reminders. It doubles as Jean's calendar and reminder system.</p>`,
+    facts: ["cron + one-shot", "self-wakeups", "injects into the live session"]
+  },
+  observability: {
+    eyebrow: "Layer 2 — Observability",
+    title: "The machine measuring itself",
+    body: `<p>A full self-hosted monitoring stack watches the box, the cluster, and the router. Around <strong>twenty collectors</strong> — systemd timers and cron jobs — write metrics that <strong>Prometheus</strong> scrapes; <strong>Loki</strong> stores logs; <strong>Grafana</strong> renders seventeen dashboards over it all.</p><p>The point isn't the graphs. It's that the machine has a live, structured sense of its own state — which is what the next layer turns into action.</p>`,
+    facts: ["<b>~20</b> collectors", "<b>17</b> dashboards", "Prometheus <b>15s</b> scrape", "Loki <b>14d</b> logs"]
+  },
+  signals: {
+    eyebrow: "Observability · Signals",
+    title: "~20 collectors, every few minutes",
+    body: `<p>Each collector writes a Prometheus textfile metric: hardware health (CPU, NVMe, SMART, battery), the email pipeline and Kafka lag, the Govee room sensor, Mastodon approvals, air quality, weather alerts, router health, SSH/ufw security events, and a security-state fingerprint. Cadences run from every minute (router guard) to every 15 minutes.</p>`,
+    facts: ["textfile collectors", "<b>1–15 min</b> cadence", "hardware · net · security · sensors"]
+  },
+  prometheus: {
+    eyebrow: "Observability · Storage",
+    title: "Prometheus & Loki",
+    body: `<p>Prometheus scrapes every 15 seconds and keeps 2 GB / 15 days of time-series. It also pulls Kubernetes-native metrics — kube-state-metrics, cAdvisor, Qdrant, Kafka — and the router's own exporter. Loki holds 14 days of logs. Alerting runs on Grafana's own unified alerting, not classic Alertmanager.</p>`,
+    facts: ["<b>2GB / 15d</b> TSDB", "scrapes the <b>router</b> too", "Grafana alerting"]
+  },
+  grafana: {
+    eyebrow: "Observability · Dashboards",
+    title: "Seventeen dashboards",
+    body: `<p>Hardware health, Kubernetes, Kafka, two network views, Qdrant, relay admin, reliability/SLA, two router views, security events, weather &amp; location, state-drift, alert history, Claude token usage, email pipeline, and infrastructure/backup. Reachable tailnet-only over the Serve door.</p>`,
+    facts: ["<b>17</b> provisioned", "tailnet-only", "one system, one language"]
+  },
+  k3s: {
+    eyebrow: "Observability · Substrate",
+    title: "A real Kubernetes cluster",
+    body: `<p>Single-node <strong>k3s</strong>, always-on. It runs Qdrant (vector DB), Kafka, the email-embed worker, and a full Mastodon instance with its own Postgres and Redis. VT-x is disabled in BIOS, so there are no VMs — containers are the platform on purpose.</p>`,
+    facts: ["<b>k3s</b> single-node", "Qdrant · Kafka · Mastodon", "containers, not VMs"]
+  },
+  selfheal: {
+    eyebrow: "Layer 3 — The Nervous System",
+    title: "Alerts become judgment, not just pages",
+    body: `<p>This is the layer that makes Rodin feel alive. When a Grafana alert fires, it does <strong>not</strong> message a human directly. It hits a loopback webhook on <code>relayd</code>, which injects the alert as a <em>prompt</em> into the live model session with an explicit instruction: use judgment on urgency. The model then decides whether it's worth surfacing, whether it can be fixed automatically, or whether it's the same benign thing already explained an hour ago.</p><p>That one design choice is why a noisy morning of harmless packets stays quiet while a genuine firewall regression gets caught and fixed within minutes.</p>`,
+    facts: ["Grafana ↛ human directly", "alert → <b>prompt</b>", "the model triages"]
+  },
+  webhook: {
+    eyebrow: "Nervous System · Intake",
+    title: "The alert webhook",
+    body: `<p>Grafana has a single contact point: a webhook to <code>127.0.0.1:9210/webhook/grafana</code>, loopback-only. relayd reads the alert's status, severity, and summary, and for every configured admin fans it out into the model session — the same buffered-inject path the scheduler uses. No email, no Slack, no PagerDuty anywhere in the loop.</p>`,
+    facts: ["loopback <b>:9210</b>", "~35 alert rules", "single contact point"]
+  },
+  judgment: {
+    eyebrow: "Nervous System · Triage",
+    title: "The judgment layer",
+    body: `<p>The injected prompt tells the model: a firing critical alert probably warrants an immediate message; a resolved one may just be a brief note; a repeat you already explained can be folded into context. So identical alerts get different treatment based on what already happened — deduplicated by understanding, not by a static rule.</p>`,
+    facts: ["urgency by context", "dedup by understanding", "acts before paging"]
+  },
+  recovery: {
+    eyebrow: "Nervous System · Resilience",
+    title: "Boot & crash auto-recovery",
+    body: `<p>The machine is built to stay up and resume itself. Sleep/suspend targets are masked; the lid does nothing; a safe-reboot ritual brings the relay back with its session intact. If the served session's process dies, it comes back and picks up the same conversation — the persistence that makes 'always-on' real rather than aspirational.</p>`,
+    facts: ["suspend <b>masked</b>", "session resumes", "safe-reboot ritual"]
+  },
+  drift: {
+    eyebrow: "Nervous System · Integrity",
+    title: "State-drift detection",
+    body: `<p>Every 15 minutes a fingerprint of security-relevant host state — listening ports, systemd units, sudoers, ufw rules, SUID binaries — is hashed and diffed against a saved baseline. Any change fires an alert through the nervous system. When a firewall rule was removed by mistake and briefly broke public federation, this is what caught it — exposure measured in minutes, not days.</p>`,
+    facts: ["<b>15 min</b> fingerprint", "ports · units · sudoers · ufw", "caught a real regression"]
+  },
+  world: {
+    eyebrow: "Layer 4 — World & Network Awareness",
+    title: "Senses beyond the machine",
+    body: `<p>Rodin doesn't only know itself. It passively watches the home network, reads the physical room through a Bluetooth sensor, pulls weather and air quality, and indexes years of email into a searchable vector space. These senses feed back up into the same conversational loop — the machine can tell you a camera is phoning home, or that indoor air just crossed unhealthy.</p>`,
+    facts: ["network · room · weather · mail", "senses feed the model", "tailnet-only surfaces"]
+  },
+  netcapture: {
+    eyebrow: "World · Network",
+    title: "Passive network capture",
+    body: `<p>A packet-capture pipeline records per-device traffic, DNS queries, and blocked tracker hits, guarded by a per-minute router-health watchdog that auto-stops capture under router pressure (built after a real incident where capture once crashed the router for hours). It's how a mystery device on the LAN was identified — by reading its actual packets — as a Wyze camera phoning home every ten seconds.</p>`,
+    facts: ["per-device bytes · DNS", "blocked-tracker tally", "router-safety watchdog"]
+  },
+  email: {
+    eyebrow: "World · Memory",
+    title: "Email → vector index",
+    body: `<p>Mail syncs from Proton Bridge into SQLite, a Kafka queue feeds an embedding worker, and vectors land in <strong>Qdrant</strong> for semantic search — 'search by meaning, not keywords.' There's a web UI and an SSH terminal client over the same index. It's the machine's long-term memory of a mailbox.</p>`,
+    facts: ["Proton → Kafka → Qdrant", "semantic search", "web + SSH TUI"]
+  },
+  sensors: {
+    eyebrow: "World · Physical",
+    title: "The room, the sky",
+    body: `<p>A Govee thermo-hygrometer is read passively over Bluetooth — no pairing — for indoor temperature and humidity, compared against an outdoor weather API. That comparison is what powers the quirky 'open a window, it's cooler outside' advisory, and let the machine measure a second air-conditioner's real effect on the room.</p>`,
+    facts: ["Govee BLE sensor", "indoor vs outdoor", "AQI + weather APIs"]
+  },
+  services: {
+    eyebrow: "World · Surfaces",
+    title: "Self-hosted apps, tailnet-only",
+    body: `<p>Beyond chat and dashboards: a daily AI-written newspaper, a glucose tracker, a Mastodon presence, an email-search UI, a TV remote, a vector-DB browser, and a notes server — each bound to the tailnet, reached through friendly paths on a private hostname. Public reachability is the exception, granted deliberately (Mastodon federation) rather than by default.</p>`,
+    facts: ["newspaper · notes · TV · search", "friendly tailnet URLs", "public only by exception"]
+  }
+};
+
+const TOUR = ["relay","observability","selfheal","world","webhook","netcapture","drift"];
+
+const chips = Array.from(document.querySelectorAll('[data-detail]'));
+const dEye = document.getElementById('d-eyebrow');
+const dTitle = document.getElementById('d-title');
+const dBody = document.getElementById('d-body');
+const dFacts = document.getElementById('d-facts');
+const detail = document.getElementById('detail');
+
+function show(key) {
+  const c = CONTENT[key];
+  if (!c) return;
+  chips.forEach(el => el.classList.toggle('active', el.getAttribute('data-detail') === key));
+  dEye.textContent = c.eyebrow;
+  dTitle.textContent = c.title;
+  dBody.innerHTML = c.body;
+  dFacts.innerHTML = c.facts.map(f => `<span class="fact">${f}</span>`).join('');
+  detail.classList.remove('swap-in'); void detail.offsetWidth; detail.classList.add('swap-in');
+}
+
+chips.forEach(el => {
+  const key = el.getAttribute('data-detail');
+  el.addEventListener('click', () => { exitTour(); show(key); detail.scrollIntoView({behavior:'smooth', block:'nearest'}); });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+});
+
+// Guided tour
+let tourIdx = -1;
+const prevBtn = document.getElementById('tourPrev');
+const nextBtn = document.getElementById('tourNext');
+const exitBtn = document.getElementById('tourExit');
+const fill = document.getElementById('tourFill');
+const counter = document.getElementById('tourCounter');
+
+function renderTour() {
+  const inTour = tourIdx >= 0;
+  prevBtn.disabled = tourIdx <= 0;
+  nextBtn.textContent = tourIdx < 0 ? "Start →" : (tourIdx >= TOUR.length - 1 ? "Finish" : "Next →");
+  counter.textContent = (inTour ? tourIdx + 1 : 0) + " / " + TOUR.length;
+  fill.style.width = (inTour ? ((tourIdx + 1) / TOUR.length) * 100 : 0) + "%";
+}
+function goTour(i) {
+  tourIdx = Math.max(0, Math.min(TOUR.length - 1, i));
+  show(TOUR[tourIdx]);
+  const layerMap = {relay:'L-relay', observability:'L-obs', selfheal:'L-heal', world:'L-world'};
+  const anchor = layerMap[TOUR[tourIdx]];
+  if (anchor) document.getElementById(anchor).classList.add('active');
+  renderTour();
+  detail.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function exitTour() { tourIdx = -1; renderTour(); document.querySelectorAll('.layer').forEach(l=>l.classList.remove('active')); }
+
+nextBtn.addEventListener('click', () => { if (tourIdx >= TOUR.length - 1) { exitTour(); } else { goTour(tourIdx + 1); } });
+prevBtn.addEventListener('click', () => goTour(tourIdx - 1));
+exitBtn.addEventListener('click', () => { exitTour(); show('relay'); });
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' && tourIdx < TOUR.length - 1) goTour(tourIdx < 0 ? 0 : tourIdx + 1);
+  if (e.key === 'ArrowLeft' && tourIdx > 0) goTour(tourIdx - 1);
+});
+renderTour();
+</script>
+</body>
+</html>

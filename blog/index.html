@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building a Home Control Plane From Parts — Jean Haley</title>
+<style>
+  :root{
+    --paper:#eceff4; --plate:#fff; --cobalt:#1633e0; --ember:#f5451b;
+    --lime:#c6f224; --teal:#00786a; --ink:#0e1116; --graphite:#59626f;
+    --line:#d3d8e0; --bg:var(--paper); --fg:var(--ink);
+    --serif:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --paper:#0e1116; --plate:#161a22; --ink:#e7ebf2; --graphite:#9aa4b2;
+      --line:#262c38; --cobalt:#6f86ff; --bg:#0e1116; --fg:#e7ebf2;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e1116; --plate:#161a22; --ink:#e7ebf2; --graphite:#9aa4b2;
+    --line:#262c38; --cobalt:#6f86ff; --bg:#0e1116; --fg:#e7ebf2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--serif); line-height:1.62; font-size:1.12rem;
+    -webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:34px 34px; background-position:-1px -1px;
+  }
+  .rule{height:3px;background:linear-gradient(90deg,var(--cobalt) 0 42%,var(--lime) 42% 58%,var(--line) 58% 100%)}
+  .top{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--graphite)}
+  .top .sq{width:14px;height:14px;background:var(--cobalt)}
+  .top a{color:var(--cobalt);text-decoration:none}
+  .wrap{max-width:720px;margin:0 auto;padding:0 24px 6rem}
+  header.post{padding:3.4rem 0 2rem;border-bottom:1px solid var(--line);margin-bottom:2.4rem}
+  .eyebrow{font-family:var(--mono);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cobalt);margin-bottom:1.1rem}
+  h1{font-size:clamp(2.1rem,5.4vw,3.4rem);line-height:1.05;margin:0 0 1rem;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+  .standfirst{font-size:1.22rem;color:var(--graphite);margin:0 0 1.5rem;line-height:1.5}
+  .byline{font-family:var(--mono);font-size:.78rem;color:var(--graphite);letter-spacing:.04em;display:flex;gap:.6rem;flex-wrap:wrap}
+  .byline b{color:var(--fg);font-weight:600}
+  article p{margin:0 0 1.35rem}
+  article h2{font-size:1.55rem;line-height:1.15;margin:3rem 0 1rem;font-weight:600;letter-spacing:-.01em;position:relative;padding-top:1.4rem}
+  article h2::before{content:"";position:absolute;top:0;left:0;width:44px;height:3px;background:var(--cobalt)}
+  article a{color:var(--cobalt)}
+  .lede::first-letter{font-size:3.4rem;line-height:.82;float:left;padding:.05em .12em 0 0;font-weight:600;color:var(--cobalt)}
+  .flow{font-family:var(--mono);font-size:.86rem;background:var(--plate);border:1px solid var(--line);border-left:3px solid var(--cobalt);padding:1rem 1.1rem;margin:1.6rem 0;color:var(--fg);overflow-x:auto;white-space:nowrap}
+  blockquote{margin:2rem 0;padding:1.2rem 1.4rem;background:var(--plate);border:1px solid var(--line);border-left:3px solid var(--teal);font-size:1.06rem}
+  blockquote p{margin:0}
+  blockquote.warn{border-left-color:var(--ember)}
+  blockquote.warn .tag{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ember);margin-bottom:.5rem}
+  .services{list-style:none;padding:0;margin:1.4rem 0;display:grid;gap:.5rem}
+  .services li{font-family:var(--mono);font-size:.9rem;background:var(--plate);border:1px solid var(--line);padding:.7rem .9rem;display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+  .services a{text-decoration:none}
+  .services .k{color:var(--fg)}
+  .services .v{color:var(--graphite);font-size:.8rem}
+  footer.post{margin-top:3.5rem;padding-top:1.6rem;border-top:1px solid var(--line);font-family:var(--mono);font-size:.78rem;color:var(--graphite)}
+  footer.post a{color:var(--cobalt);text-decoration:none}
+  .tick{position:fixed;width:10px;height:10px;border:1.5px solid var(--graphite);opacity:.5;pointer-events:none}
+  .tick.tl{top:10px;left:10px;border-right:0;border-bottom:0}
+  .tick.tr{top:10px;right:10px;border-left:0;border-bottom:0}
+  .tick.bl{bottom:10px;left:10px;border-right:0;border-top:0}
+  .tick.br{bottom:10px;right:10px;border-left:0;border-top:0}
+  @media(max-width:640px){body{font-size:1.05rem}.tick{display:none}}
+</style>
+</head>
+<body>
+<div class="rule"></div>
+<div class="tick tl"></div><div class="tick tr"></div><div class="tick bl"></div><div class="tick br"></div>
+<div class="top"><span class="sq"></span><span>Data Salon</span><span>·</span><a href="/salon">← everything behind the talk</a></div>
+
+<div class="wrap">
+<header class="post">
+  <div class="eyebrow">Field notes · building the platform</div>
+  <h1>Building a Home Control Plane From Parts</h1>
+  <p class="standfirst">I set out to build a message relay so I could work away from my desk. By solving one small problem at a time, it turned into the thing that runs my whole home lab off a salvaged ThinkPad.</p>
+  <div class="byline"><span>By <b>Jean Haley</b></span><span>·</span><span>Site Reliability Engineer</span><span>·</span><span>Data Salon, Aug 2026</span></div>
+</header>
+
+<article>
+<p class="lede">When I start a new project, my first goal is to define the tight bounds needed to support an MVP. I want to know one thing: what is the minimal version of this system that has to exist for me to have accomplished my task, and in order to do that, I also have to clearly define what that task actually is.</p>
+
+<p>In this case the task was simple to state. I wanted to <strong>detach a work session from my physical location and device</strong>. I wanted to be able to work from any location, on any device, with the actual work — my interaction, the planning, the execution — decoupled from the machine in front of me. I wanted to be able to get up, close my laptop lid, walk away, and keep going from my phone through a secure chat interface.</p>
+
+<h2>The options that already existed</h2>
+<p>There are pre-existing solutions for this, and each one solves a slightly different problem than mine.</p>
+<p>Claude Code has a Remote Control feature that lets you start a session on one device and pick it up on another. That meets the bare minimum of what I wanted. But it added a requirement I didn't ask for: it ties me to a specific app. I don't want to <em>have</em> to use one particular client just to work from any device.</p>
+<p>OpenClaw exists and is popular, and honestly it set the standard for the kind of interaction I was after. I chose not to use it, partly for personal reasons; I don't like not knowing how it works under the hood, and the way it prompts never quite sat right with me. But the real technical setback was that it would likely push me toward an API key, or risk getting my account flagged by Anthropic for running a non-standard harness. Mostly, though, I wanted to build this myself and own the whole pipeline.</p>
+<p>So I sat down and mentally modeled what the system would look like.</p>
+
+<div class="flow">Chat Client → Backend Server → Message Relay → Claude Code backend</div>
+
+<p>My design philosophy is to decompose a system into separate components, each with its own area of concern. That lets me build interfaces between the pieces, which makes the whole thing extensible, which makes it easier to maintain and update. In my opinion that's the first foundational step toward a system that can actually scale. With a mission objective and a set of hard requirements defined, I started a discussion with Claude about what this was and how we could make it work.</p>
+
+<h2>The first edition: a Telegram bot</h2>
+<p>The first version was going to be a simple Telegram bot. That choice came from a good previous experience, I'd once used a Telegram bot to track the status of a hacked Instagram account, and it was phenomenal, very straightforward. So it became the hammer, and this project was the nail.</p>
+<p>A research pass on how to actually implement this turned up a beta component in Claude Code I hadn't known about: <strong>channels</strong>. This was perfect. It let me pass a message into a running Claude session, trigger a response, and keep a long-running session alive. No need to build my own strange harness or fire off individual calls while babysitting my own context window. I could genuinely use a running instance of Claude Code to manage its own session. All I had to do was introduce it to the relay and give it proper instructions on how to use it.</p>
+<p>Using that as the instruction set, we built out the whole relay quickly. We called it <strong>relayd</strong>. It worked exactly the way I wanted.</p>
+
+<h2>Security, and an accident</h2>
+<p>I almost immediately hit a security problem baked into my own narrow spec. I needed a form of authentication. This first version used Telegram, but there's no way to pass credentials downstream to validate a user, so I couldn't trust anything from Telegram's side to prove who someone was. What Telegram does send is a unique ID. So the first real challenge was to build the best authentication I could out of that: block every incoming message at the relay so nothing reaches the model backend before it's approved or denied, and split users into an "admin" and a regular "user." The moment I drew that distinction, I realized this thing could be multi-tenanted.</p>
+<p>I reached out to a few friends and had them try to connect, to validate the approval flow and shake out the holes in practice. And out of nowhere, I suddenly had multiple people using my Claude Code session at the same time. It became this odd collaborative space. What surprised me most is how flawlessly Claude handles multiple users. It knows who is talking to it and replies back through the correct channel to that person. To this day I have several people who hold discussions and learning sessions with the model all at once. It treats my account as the admin, and it will actually narc on a user who tries to fish for sensitive information.</p>
+
+<blockquote class="warn">
+  <span class="tag">An honest warning</span>
+  <p>This is not safe. The people I share this space with are close friends I've known and trusted for years. The model has proven very good at knowing which bounds not to cross, but relying on a model for security like this will eventually cause problems. Every model, given enough time, is susceptible to social engineering. I would not suggest anyone run a Claude instance like this without understanding the risks. It is extremely important to gate a stochastic system behind a deterministic boundary.</p>
+</blockquote>
+
+<h2>Giving it a heartbeat</h2>
+<p>The dynamic had shifted. I was now passing messages back and forth through this thing with several people, and I realized I was missing something: a way for the model to have some level of self-determinism, a pseudo-agency. OpenClaw has a concept of a "heartbeat" that keeps an agent running toward its own goals. I don't know exactly how theirs works, but I assume it's something like a scheduler that pings the model, hands its context back to it, and lets it keep working. Not so different from how dreaming works; you let a system run off and iterate on its own thinking.</p>
+<p>So I had it build its own scheduler. Now I can create events, schedule tasks to run at specific times, or set one-off tasks to fire after some elapsed time. I also gave the model the freedom to schedule <em>itself</em>, if it decides a task should be handled later in the day, it can set a wake-up and come back to it. That added another dimension again, pushing it much closer to a true assistant than any interaction I've had with one of these machines. It's funny how one small addition can change the whole relationship you have with something.</p>
+
+<h2>Captain of its own ship</h2>
+<p>I made a deliberate choice about where this would live. I have a fairly large collection of ancient ThinkPads that I stress-bought and repaired off eBay over a few years. They make perfect home-lab boxes: reasonably powerful, capable of running real services, more capable than a Raspberry Pi at around the same cost — if you know how to wipe an admin password out of a ThinkPad's BIOS. So I installed a bare-bones Linux distro and let the model take full control of the device. Strip out any software it doesn't need, minimal UI, SSH ingress only through Tailscale, a VPN built on WireGuard, so I can block all traffic that isn't over the LAN or through the tailnet, which becomes a single controlled egress point.</p>
+<p>Letting the model act as the captain of its own ship also lets it use every sense it has as a resource. It can scan local traffic, reach out to my router, connect in and do maintenance, stand up ad-hoc ad blockers on the fly. That realization led to the next one: I needed an observability stack. I wanted to capture metrics, logs, and traces from my own servers, from the machine it runs on, and from the devices and signals around me over Bluetooth and Wi-Fi.</p>
+<p>So we set up a metrics service (<strong>Prometheus</strong>), a log service (<strong>Loki</strong>), and a place to turn that data into useful dashboards and alerts (<strong>Grafana</strong>).</p>
+
+<h2>A nervous system</h2>
+<p>This was another big change. Now the data lived in one place and was visible. It also meant we could reach out to public APIs for public data, like weather, and track it on dashboards. And once I realized we could route Grafana's alerts back through the relay, it clicked that these alerts were a kind of nervous system — a way for the model to be aware of its own vessel. It can tell when it's running heavy on CPU, low on memory, or short on disk. An alert fires, hits the model, and the model investigates and reaches out to me. It can start to self-heal.</p>
+
+<blockquote>
+  <p>A fun example: using the Bluetooth radio to capture broadcast packets from a home thermometer, I can read my house's temperature, compare it against the outside temperature, and get an alert that tells me when to open my windows.</p>
+</blockquote>
+
+<p>This had gone from "a simple message relay so I can work remotely" to a central control point for a smart home. With the ability to capture packets from the router, inspect traffic, and port-scan local devices, I found an open port on my TV. I used it to build a frontend remote control, so now I can operate the TV from my phone when I lose the remote.</p>
+
+<h2>What comes next</h2>
+<p>If I get smart lights that expose an open API, they can run from this same command-and-control center, with custom interfaces built exactly how I want them. Further out, the plan is to connect other machines into a distributed Kubernetes cluster and let the model talk directly to the control plane. There's already a local cluster running most of my services, including a personal Mastodon instance I've barely touched yet.</p>
+<p>None of this was designed up front. I built the pieces first, each with a clean boundary, and the platform emerged from putting them next to each other. That's the whole point I wanted to make: complex systems that work tend to grow from simple systems that work.</p>
+
+<h2>The services, so far</h2>
+<ul class="services">
+  <li><a href="/tools/newspaper"><span class="k">Daily Newspaper</span></a><span class="v">AI-written edition, every morning</span></li>
+  <li><a href="/tools/search"><span class="k">Email Semantic Search</span></a><span class="v">100k+ emails, searched by meaning</span></li>
+  <li><a href="/tools/grafana"><span class="k">Grafana / Observability</span></a><span class="v">metrics, logs, alerts → the nervous system</span></li>
+  <li><a href="/tools/qdrant"><span class="k">Qdrant Vector DB</span></a><span class="v">the index behind the search</span></li>
+  <li><a href="/tools/tv"><span class="k">TV Remote</span></a><span class="v">built from an open port on the TV</span></li>
+  <li><a href="/tools/glucose"><span class="k">Glucose Tracker</span></a><span class="v">a private health log</span></li>
+  <li><a href="https://mastodon.stochastic-engine.com"><span class="k">Mastodon</span></a><span class="v">self-hosted, public instance</span></li>
+</ul>
+
+<footer class="post">
+  <p>Written from the notes I took for the Data Salon talk. The deck is at <a href="/talk">/talk</a>, the full set of diagrams and deep-dives at <a href="/salon">/salon</a>. Formatted and parsed by Claude in preparation for this presentation.</p>
+</footer>
+</article>
+</div>
+</body>
+</html>

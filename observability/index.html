@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rodin — observability stack breakdown</title>
+<style>
+  :root {
+    --paper: #eceff4; --plate: #ffffff; --vellum: #f7f9fc; --line: #dce1ea;
+    --rule-strong: #c3cad6; --ink: #0e1116; --graphite: #59626f;
+    --cobalt: #1633e0; --wash: #e7eaff; --ember: #f5451b;
+    --lime: #c6f224; --teal: #00786a; --teal-soft: #e2f5f1;
+    --shadow: 0 1px 0 rgba(14,17,22,0.04), 0 2px 4px rgba(14,17,22,0.03), 0 24px 48px -20px rgba(22,51,224,0.16);
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; color: var(--ink); font-family: var(--sans); overflow-x: hidden;
+    background: linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px, var(--paper); }
+  header { padding: 2.6rem 5vw 1.2rem; max-width: 1200px; margin: 0 auto; }
+  .rule-top { height: 3px; width: 100%; background: linear-gradient(to right, var(--cobalt) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%); margin-bottom: 1.15rem; }
+  .masthead { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 1rem 2rem; }
+  .brand { display: flex; align-items: center; gap: 0.7rem; }
+  .brand-mark { width: 28px; height: 28px; flex: none; background: var(--cobalt); display: flex; align-items: center; justify-content: center; clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .kicker { font-family: var(--mono); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graphite); line-height: 1.5; }
+  .kicker b { color: var(--ink); font-weight: 700; display: block; }
+  .masthead-meta { font-family: var(--mono); font-size: 0.63rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--graphite); text-align: right; line-height: 1.7; }
+  .masthead-meta em { font-style: normal; color: var(--ink); }
+  main { max-width: 1200px; margin: 0 auto; padding: 0 5vw 3rem; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 2.6rem); letter-spacing: -0.02em; margin: 1.2rem 0 0.5rem; }
+  h1 em { font-style: italic; color: var(--cobalt); }
+  .sub { color: var(--graphite); font-size: 1.02rem; line-height: 1.55; max-width: 54rem; margin: 0 0 1.8rem; }
+
+  .plate { position: relative; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 1.6rem 1.6rem 1.2rem; margin-bottom: 1.8rem; }
+  .plate::before, .plate::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  .plate::before { top: -1px; left: -1px; border-top: 2px solid var(--cobalt); border-left: 2px solid var(--cobalt); }
+  .plate::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cobalt); border-right: 2px solid var(--cobalt); }
+  .plate-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.8rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .plate-head h2 { font-family: var(--display); font-weight: 400; font-size: 1.2rem; margin: 0; }
+  .plate-head .eyebrow { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); }
+
+  .diagram-scroll { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  svg.diagram { width: 100%; min-width: 1040px; height: auto; display: block; overflow: visible; }
+  .node rect { fill: var(--vellum); stroke: var(--rule-strong); stroke-width: 1.4; }
+  .node.cobalt rect { fill: #fbfcff; stroke: var(--cobalt); }
+  .node.term rect { fill: var(--teal-soft); stroke: var(--teal); }
+  .node .t { font-weight: 650; font-size: 13px; fill: var(--ink); text-anchor: middle; }
+  .node .s { font-family: var(--mono); font-size: 8.5px; fill: var(--graphite); text-anchor: middle; }
+  .flow { stroke: var(--cobalt); stroke-width: 1.8; fill: none; }
+  .flow.soft { stroke: var(--rule-strong); }
+  .flow.reply { stroke: var(--teal); stroke-dasharray: 5 3; }
+  .flow-l { font-family: var(--mono); font-size: 9px; fill: var(--graphite); text-anchor: middle; }
+  .group-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; fill: #59626f; }
+  .group-box { fill: #f7f9fc; stroke: #c3cad6; stroke-width: 1; stroke-dasharray: 3 3; }
+
+  figcaption { font-size: 0.82rem; color: var(--graphite); line-height: 1.5; margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+  figcaption code { font-family: var(--mono); font-size: 0.85em; background: var(--vellum); border: 1px solid var(--line); padding: 0.03em 0.32em; border-radius: 4px; }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.4rem; }
+  h3 { font-family: var(--display); font-weight: 400; font-size: 1.06rem; margin: 0 0 0.5rem; }
+  p { line-height: 1.6; font-size: 0.92rem; color: var(--ink); }
+  p.lede { color: var(--graphite); }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--vellum); border: 1px solid var(--line); padding: 0.03em 0.32em; border-radius: 4px; }
+  ul.tight { margin: 0.4rem 0 0.8rem; padding-left: 1.15rem; }
+  ul.tight li { font-size: 0.86rem; line-height: 1.55; margin-bottom: 0.2rem; }
+  .jobgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.4rem; margin: 0.6rem 0 0.2rem; }
+  .job { font-family: var(--mono); font-size: 0.72rem; background: var(--vellum); border: 1px solid var(--line); border-radius: 5px; padding: 0.35rem 0.5rem; }
+  .job b { color: var(--cobalt); }
+  .alertlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.35rem; margin: 0.6rem 0; }
+  .alertlist .a { font-family: var(--mono); font-size: 0.72rem; padding: 0.3rem 0.5rem; border-radius: 5px; border: 1px solid var(--line); background: var(--wash); color: var(--ink); }
+  .alertlist .a.crit { border-color: var(--ember); background: #fff2ee; }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 1.4rem 5vw 3rem; font-family: var(--mono); font-size: 0.7rem; color: var(--graphite); border-top: 1px solid var(--line); }
+  footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div class="rule-top"></div>
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-7 4 14 2-9 2 4h2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="kicker"><b>Rodin</b>observability stack</div>
+    </div>
+    <div class="masthead-meta"><div><em>Component breakdown</em></div><div>Read from live source, jeanh-thinkpad-t480</div></div>
+  </div>
+</header>
+
+<main>
+  <h1>The nervous system of the vessel: <em>metrics, logs, and the alert loop</em></h1>
+  <p class="sub">Thirteen scrape targets feed one Prometheus, one Loki holds the logs, one Grafana renders both and evaluates the alert rules — and every firing rule is routed not to a pager, but back through <code>relayd</code>'s webhook into the model, so a critical alert gets judgment applied before it ever reaches Jean.</p>
+
+  <div class="plate">
+    <div class="plate-head">
+      <h2>Data flow, exporter to admin</h2>
+      <div class="eyebrow">13 scrape jobs · 1 Loki · 1 Grafana · alerts loop through relayd</div>
+    </div>
+    <figure style="margin:0">
+      <div class="diagram-scroll">
+      <svg class="diagram" viewBox="0 0 1220 900" role="img" aria-label="Diagram: external APIs (Open-Meteo, NWS weather.gov, WiGLE) feed textfile-collector scripts that write into node_exporter's textfile directory, scraped by the node job; thirteen Prometheus scrape targets grouped into host, lab-service, and kubernetes tiers feed Prometheus; Promtail feeds Loki with logs; Grafana queries both Prometheus and Loki for dashboards and alert rule evaluation; firing Grafana alerts POST to relayd's webhook on localhost:9210, which injects the alert as a prompt into the Claude Code model, which uses judgment to decide whether and how to message Jean over the relay channel.">
+        <defs>
+          <marker id="d-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="d-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c3cad6"/></marker>
+          <marker id="d-reply" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker>
+        </defs>
+
+        <!-- group boxes for exporters -->
+        <rect class="group-box" fill="#f7f9fc" stroke="#c3cad6" x="16" y="16" width="230" height="130" rx="6"/>
+        <text class="group-label" fill="#59626f" x="26" y="34">EXTERNAL APIS</text>
+        <g class="node"><rect x="26" y="42" width="210" height="26" rx="5"/><text class="t" x="131" y="59" font-size="10.5">Open-Meteo</text></g>
+        <text class="s" x="131" y="74" font-family="monospace" font-size="7.5" fill="#59626f" text-anchor="middle">weather-groundtruth + aqi_check</text>
+        <g class="node"><rect x="26" y="80" width="210" height="26" rx="5"/><text class="t" x="131" y="97" font-size="10.5">NWS / weather.gov</text></g>
+        <text class="s" x="131" y="112" font-family="monospace" font-size="7.5" fill="#59626f" text-anchor="middle">weather_alerts_check</text>
+        <g class="node"><rect x="26" y="118" width="210" height="20" rx="5"/><text class="t" x="131" y="132" font-size="10.5">WiGLE · wigle_locate</text></g>
+        <line class="flow soft" x1="131" y1="149" x2="131" y2="190" marker-end="url(#d-soft)"/>
+        <text class="flow-l" x="200" y="175">textfile .prom</text>
+
+        <rect class="group-box" fill="#f7f9fc" stroke="#c3cad6" x="16" y="166" width="230" height="150" rx="6"/>
+        <text class="group-label" fill="#59626f" x="26" y="184">HOST</text>
+        <rect class="group-box" fill="#f7f9fc" stroke="#c3cad6" x="16" y="332" width="230" height="230" rx="6"/>
+        <text class="group-label" fill="#59626f" x="26" y="350">LAB SERVICES</text>
+        <rect class="group-box" fill="#f7f9fc" stroke="#c3cad6" x="16" y="578" width="230" height="150" rx="6"/>
+        <text class="group-label" fill="#59626f" x="26" y="596">KUBERNETES</text>
+        <rect class="group-box" fill="#f7f9fc" stroke="#c3cad6" x="16" y="744" width="230" height="70" rx="6"/>
+        <text class="group-label" fill="#59626f" x="26" y="762">SELF-SCRAPE</text>
+
+        <!-- host tier nodes -->
+        <g class="node"><rect x="26" y="192" width="210" height="34" rx="6"/><text class="t" x="131" y="213" font-size="11.5">node</text></g>
+        <text class="s" x="131" y="230" font-family="monospace" font-size="8" fill="#59626f" text-anchor="middle">:9100 · node_exporter + textfile</text>
+        <g class="node"><rect x="26" y="244" width="210" height="34" rx="6"/><text class="t" x="131" y="265" font-size="11.5">router</text></g>
+        <text class="s" x="131" y="282" font-family="monospace" font-size="8" fill="#59626f" text-anchor="middle">router (LAN):9100</text>
+        <g class="node"><rect x="26" y="296" width="210" height="12" rx="4"/></g>
+
+        <!-- lab services tier -->
+        <g class="node"><rect x="26" y="358" width="210" height="30" rx="6"/><text class="t" x="131" y="377" font-size="11">qdrant</text></g>
+        <g class="node"><rect x="26" y="392" width="210" height="30" rx="6"/><text class="t" x="131" y="411" font-size="11">kafka</text></g>
+        <g class="node"><rect x="26" y="426" width="210" height="30" rx="6"/><text class="t" x="131" y="445" font-size="11">email_embed_worker</text></g>
+        <g class="node"><rect x="26" y="460" width="210" height="30" rx="6"/><text class="t" x="131" y="479" font-size="11">email_search</text></g>
+        <g class="node"><rect x="26" y="494" width="210" height="30" rx="6"/><text class="t" x="131" y="513" font-size="11">govee_monitor</text></g>
+        <g class="node"><rect x="26" y="528" width="210" height="30" rx="6"/><text class="t" x="131" y="547" font-size="11">relayd</text></g>
+
+        <!-- kubernetes tier -->
+        <g class="node"><rect x="26" y="604" width="210" height="30" rx="6"/><text class="t" x="131" y="623" font-size="11">kube_state_metrics</text></g>
+        <g class="node"><rect x="26" y="638" width="210" height="30" rx="6"/><text class="t" x="131" y="657" font-size="11">k8s_cadvisor</text></g>
+        <text class="s" x="131" y="674" font-family="monospace" font-size="8" fill="#59626f" text-anchor="middle">cAdvisor via node proxy :8001</text>
+
+        <!-- self monitoring -->
+        <g class="node"><rect x="26" y="770" width="210" height="30" rx="6"/><text class="t" x="131" y="789" font-size="11">prometheus · grafana · loki</text></g>
+
+        <!-- Prometheus -->
+        <g class="node cobalt"><rect x="330" y="380" width="150" height="66" rx="8"/><text class="t" x="405" y="406">Prometheus</text><text class="s" x="405" y="422">:9090 scrape · 15s</text><text class="s" x="405" y="434">400d / 20GB retention</text></g>
+
+        <!-- flows exporters -> prometheus -->
+        <line class="flow soft" x1="236" y1="243" x2="330" y2="400" marker-end="url(#d-soft)"/>
+        <line class="flow soft" x1="236" y1="420" x2="330" y2="410" marker-end="url(#d-soft)"/>
+        <line class="flow soft" x1="236" y1="620" x2="330" y2="425" marker-end="url(#d-soft)"/>
+        <line class="flow soft" x1="236" y1="785" x2="330" y2="435" marker-end="url(#d-soft)"/>
+        <text class="flow-l" x="280" y="590">13 scrape jobs</text>
+
+        <!-- Promtail -> Loki -->
+        <g class="node"><rect x="330" y="560" width="150" height="46" rx="8"/><text class="t" x="405" y="582" font-size="12">Promtail</text><text class="s" x="405" y="597">journald + files</text></g>
+        <g class="node cobalt"><rect x="330" y="624" width="150" height="46" rx="8"/><text class="t" x="405" y="646" font-size="12">Loki</text><text class="s" x="405" y="661">:3100 log store</text></g>
+        <line class="flow" x1="405" y1="606" x2="405" y2="624" marker-end="url(#d-in)"/>
+
+        <!-- Grafana -->
+        <g class="node cobalt"><rect x="590" y="480" width="150" height="66" rx="8"/><text class="t" x="665" y="506">Grafana</text><text class="s" x="665" y="522">:3000 dashboards</text><text class="s" x="665" y="534">+ ngalert eval, 1m</text></g>
+        <line class="flow" x1="480" y1="420" x2="590" y2="500" marker-end="url(#d-in)"/>
+        <text class="flow-l" x="535" y="450">PromQL</text>
+        <line class="flow" x1="480" y1="647" x2="590" y2="525" marker-end="url(#d-in)"/>
+        <text class="flow-l" x="535" y="600">LogQL</text>
+
+        <!-- alert rule engine -->
+        <g class="node term"><rect x="590" y="570" width="150" height="56" rx="8"/><text class="t" x="665" y="593" fill="#00786a">Alert rules</text><text class="s" x="665" y="609">Vessel Alerts folder</text></g>
+        <line class="flow soft" x1="665" y1="546" x2="665" y2="570" marker-end="url(#d-soft)"/>
+
+        <!-- relay webhook -->
+        <g class="node cobalt"><rect x="800" y="570" width="170" height="56" rx="8"/><text class="t" x="885" y="590">relayd</text><text class="s" x="885" y="606">/webhook/grafana</text><text class="s" x="885" y="618">127.0.0.1:9210, loopback</text></g>
+        <line class="flow" x1="740" y1="598" x2="800" y2="598" marker-end="url(#d-in)"/>
+        <text class="flow-l" x="770" y="590">POST alert</text>
+
+        <!-- model -->
+        <g class="node term"><rect x="800" y="480" width="170" height="56" rx="8"/><text class="t" x="885" y="502" fill="#00786a">Claude Code</text><text class="s" x="885" y="518">judges urgency</text><text class="s" x="885" y="530">buffered-inject path</text></g>
+        <line class="flow" x1="885" y1="570" x2="885" y2="536" marker-end="url(#d-in)"/>
+
+        <!-- reply -->
+        <g class="node"><rect x="1000" y="480" width="150" height="56" rx="8"/><text class="t" x="1075" y="502">Jean</text><text class="s" x="1075" y="518">relay reply tool</text><text class="s" x="1075" y="530">Telegram / Discord</text></g>
+        <line class="flow reply" x1="970" y1="508" x2="1000" y2="508" marker-end="url(#d-reply)"/>
+        <text class="flow-l" x="985" y="495" fill="#00786a">reply()</text>
+
+        <text class="group-label" x="16" y="864" fill="#59626f">alert loop: Grafana evaluates → fires → relayd webhook → injected as a model prompt → Claude decides how/whether to notify → reply tool → Jean</text>
+      </svg>
+      </div>
+      <figcaption>
+        Exporters are grouped by tier: external APIs (<code>Open-Meteo</code>,
+        <code>NWS / weather.gov</code>, <code>WiGLE</code> — not scraped directly, they write
+        textfile <code>.prom</code> collectors that ride the <code>node</code> job), host
+        (<code>node</code>, <code>router</code>), lab services
+        (<code>qdrant</code>, <code>kafka</code>, <code>email_embed_worker</code>, <code>email_search</code>,
+        <code>govee_monitor</code>, <code>relayd</code>), kubernetes (<code>kube_state_metrics</code>,
+        <code>k8s_cadvisor</code> via the node's kubelet proxy), and the observability stack's own
+        self-scrape (<code>prometheus</code>, <code>grafana</code>, <code>loki</code>) — 13 jobs total,
+        all healthy at last check. Node-level custom metrics ride node_exporter's textfile collector
+        from <code>/var/lib/prometheus/node-exporter/*.prom</code> (ssh_auth, tailscale, nvme, weather,
+        backup, kafka_consumer_lag, and more — over 20 small scripts). Promtail ships logs to Loki
+        independently of the metrics path. Grafana is the only consumer of both Prometheus and Loki,
+        and it alone evaluates alert rules; firing/resolved alerts are POSTed to relayd's
+        <code>/webhook/grafana</code>, loopback-only, which injects a prompt into the live Claude Code
+        session rather than paging Jean directly — the model decides urgency before anything reaches him.
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="cols">
+    <div class="plate">
+      <h3>Metrics pipeline</h3>
+      <p class="lede">Prometheus (<code>prometheus.service</code>, active since 2026‑07‑17, ~830 MB RSS) scrapes 13 jobs every 15s (5s for its own self-scrape) per <code>/etc/prometheus/prometheus.yml</code>, retaining 400 days / 20GB on local TSDB.</p>
+      <div class="jobgrid">
+        <div class="job"><b>node</b> :9100</div>
+        <div class="job"><b>router</b> router (LAN):9100</div>
+        <div class="job"><b>qdrant</b> :6333</div>
+        <div class="job"><b>kafka</b> :9404</div>
+        <div class="job"><b>email_embed_worker</b> :9201</div>
+        <div class="job"><b>email_search</b> :5050</div>
+        <div class="job"><b>govee_monitor</b> :9202</div>
+        <div class="job"><b>relayd</b> :9210</div>
+        <div class="job"><b>kube_state_metrics</b> :8080</div>
+        <div class="job"><b>k8s_cadvisor</b> proxy :8001</div>
+        <div class="job"><b>prometheus</b> self</div>
+        <div class="job"><b>grafana</b> :3000</div>
+        <div class="job"><b>loki</b> :3100</div>
+      </div>
+      <p>Recording rules (<code>vessel-recording-rules.yml</code>) pre-aggregate SLOs: <code>vessel_slo:up:avg7d</code>,
+      <code>vessel_slo:tailscale_self:avg7d/avg30d_from_weekly</code>, <code>vessel_slo:node_reboots:count7d/30d</code>, and
+      weather derivatives (<code>vessel:indoor_outdoor_temp_diff_fahrenheit</code>) so dashboards and alert
+      conditions don't recompute long-window aggregates on every panel load.</p>
+      <p>Not every metric originates on this box. Three cron-run collector scripts call public APIs and
+      write straight into node_exporter's textfile directory, so their output rides the plain
+      <code>node</code> scrape rather than getting its own job: <b>Open-Meteo</b>
+      (<code>api.open-meteo.com/forecast</code> + archive, and <code>air-quality-api.open-meteo.com</code>)
+      via <code>weather-groundtruth</code> and <code>aqi_check</code> into
+      <code>weather_groundtruth.prom</code> / <code>air_quality.prom</code> — outdoor temp, feels-like,
+      humidity, US AQI; <b>NWS / weather.gov</b> (<code>api.weather.gov/alerts/active</code>) via
+      <code>weather_alerts_check</code> into <code>weather_alerts.prom</code> — severe-weather and
+      advisory alerts; and <b>WiGLE</b> (<code>api.wigle.net</code>) via <code>wigle_locate</code> into
+      <code>wigle_location.prom</code>.</p>
+    </div>
+    <div class="plate">
+      <h3>Log pipeline (Loki)</h3>
+      <p class="lede"><code>loki.service</code> (active since 2026‑07‑17) runs single-binary, filesystem storage under
+      <code>/var/lib/loki</code>, listening on :3100 (HTTP) / :9096 (gRPC). <code>promtail.service</code> tails
+      journald and files, pushing structured log lines with labels (e.g. <code>job="usb_events"</code>).</p>
+      <p>Grafana's Loki datasource is queried both for dashboards and directly inside alert rule conditions —
+      e.g. <code>usb-device-connect-disconnect</code> evaluates
+      <code>count_over_time({job="usb_events"} | logfmt [1m])</code> once a minute, so log-only events (no metric
+      series exists) can still fire an alert through the same rule engine as PromQL-based ones.</p>
+    </div>
+    <div class="plate">
+      <h3>Dashboards</h3>
+      <p class="lede">Grafana (<code>grafana-server.service</code>, restarted 2026‑08‑09, provisioned dashboards under
+      <code>/etc/grafana/provisioning/dashboards/json/</code>) is the single pane of glass over both datasources
+      — PromQL panels for metrics, LogQL panels for logs, plus an alert-history table
+      (<code>vessel-alert-history.json</code>) and a weather dashboard. Datasources and alert config are all
+      file-provisioned (not clicked-together), so the stack rebuilds itself from git/config on a fresh box.</p>
+    </div>
+    <div class="plate">
+      <h3>The alert / nervous-system loop</h3>
+      <p class="lede">Alert rules live in <code>/etc/grafana/provisioning/alerting/</code>, folder <b>Vessel Alerts</b>,
+      group <code>vessel-critical</code>, evaluated every 1m. A single contact point,
+      <code>relay-webhook</code>, POSTs every firing/resolved alert to
+      <code>http://127.0.0.1:9210/webhook/grafana</code> — loopback only, since Grafana and relayd share
+      this host. Notification policy groups by <code>alertname</code>; <code>severity=critical</code> gets
+      10s group-wait / 1h repeat, <code>severity=degraded</code> uses the looser default.</p>
+      <p>relayd's handler (<code>cmd/relayd/main.go</code>, <code>serveGrafanaWebhook</code>) doesn't page Jean
+      directly — it builds a prompt (<code>"[Grafana alert, status=…, severity=…] name: summary … use your
+      judgment on how urgently to surface this…"</code>) and injects it into the live Claude Code session
+      via the same buffered-inject path used for scheduled triggers. The model decides whether a firing
+      critical alert needs an immediate ping, a resolved one just a brief note, or folds it into an
+      investigation already underway — then calls the relay <code>reply</code> tool itself. This is the
+      loop this whole document exists to describe: <b>exporters → Prometheus/Loki → Grafana evaluates →
+      relayd webhook → model judgment → Jean.</b></p>
+      <p style="margin-top:0.6rem">A representative slice of the ~34 configured rules (grouped by folder,
+      not all currently loaded — some rotate through <code>.bak</code> staging files during edits):</p>
+      <div class="alertlist">
+        <div class="a crit">tailscale-down</div>
+        <div class="a crit">kafka-down</div>
+        <div class="a crit">relay-circuit-breaker-open</div>
+        <div class="a crit">router-down</div>
+        <div class="a crit">observability-down</div>
+        <div class="a">swap-in-use</div>
+        <div class="a">indoor-hotter-than-outdoor</div>
+        <div class="a">air-quality-unhealthy-sensitive</div>
+        <div class="a">backup-too-old</div>
+        <div class="a">embed-worker-dlq-rising</div>
+        <div class="a">k8s-pods-not-running</div>
+        <div class="a">ssh-failed-login-burst</div>
+        <div class="a">usb-device-connect-disconnect</div>
+        <div class="a">nvme-unhealthy</div>
+        <div class="a">mastodon-core-pod-down</div>
+        <div class="a">relay-unrecognized-access</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer><b>Rodin</b> — observability breakdown compiled from live systemctl status, <code>/etc/prometheus/prometheus.yml</code>,
+Prometheus <code>/api/v1/targets</code> and <code>/api/v1/rules</code>, <code>/etc/grafana/provisioning/alerting/</code>,
+<code>/etc/loki/config.yml</code>, and <code>cmd/relayd/main.go</code> (<code>serveGrafanaWebhook</code>) on jeanh-thinkpad-t480.</footer>
+</body>
+</html>

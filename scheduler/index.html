@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-relay — the scheduler, component by component</title>
+<style>
+  :root {
+    --paper: #eceff4; --plate: #ffffff; --vellum: #f7f9fc; --line: #dce1ea;
+    --rule-strong: #c3cad6; --ink: #0e1116; --graphite: #59626f;
+    --cobalt: #1633e0; --wash: #e7eaff; --ember: #f5451b; --ash: #ffeae3;
+    --lime: #c6f224; --teal: #00786a; --teal-soft: #e2f5f1;
+    --shadow: 0 1px 0 rgba(14,17,22,0.04), 0 2px 4px rgba(14,17,22,0.03), 0 24px 48px -20px rgba(22,51,224,0.16);
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; color: var(--ink); font-family: var(--sans); overflow-x: hidden;
+    background: linear-gradient(to right, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(to bottom, rgba(22,51,224,0.045) 1px, transparent 1px) 0 0 / 32px 32px, var(--paper); }
+  header { padding: 2.6rem 5vw 1.2rem; max-width: 1180px; margin: 0 auto; }
+  .rule-top { height: 3px; width: 100%; background: linear-gradient(to right, var(--cobalt) 0 22%, var(--lime) 22% 30%, var(--line) 30% 100%); margin-bottom: 1.15rem; }
+  .kicker { font-family: var(--mono); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graphite); line-height: 1.5; }
+  .kicker b { color: var(--ink); font-weight: 700; display: block; }
+  main { max-width: 1180px; margin: 0 auto; padding: 0 5vw 4rem; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(1.8rem, 3.6vw, 2.6rem); letter-spacing: -0.02em; margin: 1.1rem 0 0.5rem; }
+  h1 em { font-style: italic; color: var(--cobalt); }
+  .sub { color: var(--graphite); font-size: 1.02rem; line-height: 1.55; max-width: 54rem; margin: 0 0 1.8rem; }
+
+  .plate { position: relative; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); padding: 1.6rem 1.6rem 1.2rem; margin-bottom: 2rem; }
+  .plate::before, .plate::after { content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none; }
+  .plate::before { top: -1px; left: -1px; border-top: 2px solid var(--cobalt); border-left: 2px solid var(--cobalt); }
+  .plate::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--cobalt); border-right: 2px solid var(--cobalt); }
+  .plate-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding-bottom: 0.8rem; margin-bottom: 0.6rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .plate-head h2 { font-family: var(--display); font-weight: 400; font-size: 1.2rem; margin: 0; }
+  .legend { display: flex; gap: 1.1rem; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--graphite); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .legend i { width: 22px; height: 0; border-top-width: 2px; border-top-style: solid; display: inline-block; }
+  .legend .flow i { border-color: var(--cobalt); }
+  .legend .soft i { border-color: var(--rule-strong); border-top-style: dashed; }
+
+  svg.diagram { width: 100%; height: auto; display: block; overflow: visible; }
+  .node rect { fill: var(--vellum); stroke: var(--rule-strong); stroke-width: 1.4; }
+  .node.cobalt rect { fill: #fbfcff; stroke: var(--cobalt); }
+  .node.term rect { fill: var(--teal-soft); stroke: var(--teal); }
+  .node .t { font-weight: 650; font-size: 13px; fill: var(--ink); text-anchor: middle; font-family: var(--sans); }
+  .node .s { font-family: var(--mono); font-size: 8.5px; fill: var(--graphite); text-anchor: middle; }
+  .flow { stroke: var(--cobalt); stroke-width: 1.8; fill: none; }
+  .flow.soft { stroke: var(--rule-strong); stroke-dasharray: 4 3; }
+  .flow-l { font-family: var(--mono); font-size: 9px; fill: var(--graphite); text-anchor: middle; }
+
+  figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--graphite); margin-top: 0.9rem; line-height: 1.5; }
+  figure { margin: 0; }
+
+  h2.sec { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 0 0 0.6rem; }
+  p { line-height: 1.6; font-size: 0.95rem; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--vellum); border: 1px solid var(--line); padding: 0.03em 0.35em; border-radius: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  .card { background: var(--vellum); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; }
+  .card h3 { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cobalt); margin: 0 0 0.45rem; }
+  .card p, .card li { font-size: 0.85rem; }
+  ul.tight { margin: 0.3rem 0; padding-left: 1.2rem; }
+  ul.tight li { line-height: 1.55; margin-bottom: 0.25rem; }
+  .foot { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--graphite); text-transform: uppercase; margin-top: 2.4rem; border-top: 1px solid var(--line); padding-top: 0.9rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="rule-top"></div>
+  <div class="kicker"><b>agent-relay / internal/scheduler</b>component breakdown — reminder engine + event tracker</div>
+  <h1>The scheduler: cron, <em>one-shots</em>, and the event that won't let itself be ignored</h1>
+  <p class="sub">Two cooperating types — <code>Scheduler</code> (internal/scheduler/scheduler.go) arms timers and fires text at a chat id; <code>Tracker</code> (internal/scheduler/events.go) records that a fire actually happened and escalates until it's acknowledged. Neither knows about Claude, Telegram, or Discord — they hold text, a chat id, and timestamps, and call back into the daemon.</p>
+</header>
+<main>
+
+<section class="plate">
+  <div class="plate-head">
+    <h2>Figure — schedule lifecycle: create → arm → fire → track → escalate</h2>
+    <div class="legend">
+      <span class="flow"><i></i>primary call/data flow</span>
+      <span class="soft"><i></i>persistence / disk</span>
+    </div>
+  </div>
+  <figure>
+    <svg class="diagram" viewBox="0 0 1080 620" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--cobalt)"></path>
+        </marker>
+        <marker id="arrowSoft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--rule-strong)"></path>
+        </marker>
+      </defs>
+
+      <!-- Row 1: creation -->
+      <g class="node cobalt">
+        <rect x="20" y="20" width="160" height="54" rx="4"></rect>
+        <text class="t" x="100" y="42">Model / MCP tool</text>
+        <text class="s" x="100" y="58">schedule_message</text>
+      </g>
+      <g class="node cobalt">
+        <rect x="230" y="20" width="170" height="54" rx="4"></rect>
+        <text class="t" x="315" y="42">Scheduler.Create</text>
+        <text class="s" x="315" y="58">cronSpec xor in_seconds</text>
+      </g>
+      <g class="node">
+        <rect x="450" y="20" width="150" height="54" rx="4"></rect>
+        <text class="t" x="525" y="42">arm()</text>
+        <text class="s" x="525" y="58">cron entry / time.Timer</text>
+      </g>
+      <g class="node">
+        <rect x="650" y="20" width="180" height="54" rx="4"></rect>
+        <text class="t" x="740" y="38">schedules.json</text>
+        <text class="s" x="740" y="54">save() tmp+rename,</text>
+        <text class="s" x="740" y="65">re-armed by load() on restart</text>
+      </g>
+
+      <line class="flow" x1="180" y1="47" x2="230" y2="47" marker-end="url(#arrow)"></line>
+      <line class="flow" x1="400" y1="47" x2="450" y2="47" marker-end="url(#arrow)"></line>
+      <line class="flow soft" x1="600" y1="47" x2="650" y2="47" marker-end="url(#arrowSoft)"></line>
+
+      <!-- external file edit path -->
+      <g class="node">
+        <rect x="870" y="15" width="190" height="64" rx="4"></rect>
+        <text class="t" x="965" y="35">fsnotify watcher</text>
+        <text class="s" x="965" y="50">watchLoop → 300ms debounce</text>
+        <text class="s" x="965" y="63">→ reconcileFromFile()</text>
+      </g>
+      <line class="flow soft" x1="830" y1="55" x2="870" y2="50" marker-end="url(#arrowSoft)"></line>
+      <text class="flow-l" x="950" y="100">hand-edit tagged Source=SourceFile</text>
+
+      <!-- Row 2: firing -->
+      <g class="node">
+        <rect x="230" y="150" width="170" height="54" rx="4"></rect>
+        <text class="t" x="315" y="172">cron tick / AfterFunc</text>
+        <text class="s" x="315" y="188">calls fire(id)</text>
+      </g>
+      <line class="flow" x1="525" y1="74" x2="315" y2="150" marker-end="url(#arrow)"></line>
+
+      <g class="node cobalt">
+        <rect x="450" y="150" width="160" height="54" rx="4"></rect>
+        <text class="t" x="530" y="172">Scheduler.fire</text>
+        <text class="s" x="530" y="188">calls DeliverFunc</text>
+      </g>
+      <line class="flow" x1="400" y1="177" x2="450" y2="177" marker-end="url(#arrow)"></line>
+
+      <g class="node term">
+        <rect x="660" y="150" width="180" height="54" rx="4"></rect>
+        <text class="t" x="750" y="170">Tracker.Fire</text>
+        <text class="s" x="750" y="186">daemon's DeliverFunc impl</text>
+      </g>
+      <line class="flow" x1="610" y1="177" x2="660" y2="177" marker-end="url(#arrow)"></line>
+      <text class="flow-l" x="628" y="165">deliver()</text>
+
+      <text class="flow-l" x="530" y="222">one-shot: deleted from items only</text>
+      <text class="flow-l" x="530" y="234">AFTER deliver() succeeds (crash-safe)</text>
+
+      <!-- Row 3: tracker internals -->
+      <g class="node term">
+        <rect x="660" y="260" width="180" height="60" rx="4"></rect>
+        <text class="t" x="750" y="282">PendingEvent</text>
+        <text class="s" x="750" y="298">status=pending, FireCount++</text>
+        <text class="s" x="750" y="311">coalesced if same scheduleID open</text>
+      </g>
+      <line class="flow" x1="750" y1="204" x2="750" y2="260" marker-end="url(#arrow)"></line>
+
+      <g class="node">
+        <rect x="900" y="260" width="160" height="54" rx="4"></rect>
+        <text class="t" x="980" y="282">pending_events.json</text>
+        <text class="s" x="980" y="298">persist() before any cleanup</text>
+      </g>
+      <line class="flow soft" x1="840" y1="285" x2="900" y2="285" marker-end="url(#arrowSoft)"></line>
+
+      <g class="node cobalt">
+        <rect x="420" y="260" width="180" height="60" rx="4"></rect>
+        <text class="t" x="510" y="282">InjectFunc</text>
+        <text class="s" x="510" y="298">into Claude session as</text>
+        <text class="s" x="510" y="311">"[scheduled trigger...] fired"</text>
+      </g>
+      <line class="flow" x1="660" y1="288" x2="600" y2="288" marker-end="url(#arrow)"></line>
+      <text class="flow-l" x="630" y="245">initialPrompt(ev)</text>
+
+      <g class="node cobalt">
+        <rect x="200" y="260" width="170" height="60" rx="4"></rect>
+        <text class="t" x="285" y="282">Model / agent</text>
+        <text class="s" x="285" y="298">acts on trigger, replies,</text>
+        <text class="s" x="285" y="311">or resumes self-wakeup work</text>
+      </g>
+      <line class="flow" x1="420" y1="288" x2="370" y2="288" marker-end="url(#arrow)"></line>
+
+      <!-- Row 4: reconcile loop -->
+      <g class="node">
+        <rect x="420" y="380" width="180" height="60" rx="4"></rect>
+        <text class="t" x="510" y="402">Tracker.runLoop</text>
+        <text class="s" x="510" y="418">30s ticker → Reconcile(now)</text>
+        <text class="s" x="510" y="431">wall-clock, no per-event timers</text>
+      </g>
+      <line class="flow soft" x1="750" y1="320" x2="510" y2="380" marker-end="url(#arrowSoft)"></line>
+      <text class="flow-l" x="640" y="355">scans events map</text>
+
+      <g class="node">
+        <rect x="660" y="380" width="180" height="70" rx="4"></rect>
+        <text class="t" x="750" y="402">age ≥ NudgeAfter (5m)</text>
+        <text class="s" x="750" y="418">re-inject nudgePrompt() once</text>
+        <text class="s" x="750" y="431">LastNudgeAt stamped</text>
+        <text class="s" x="750" y="444">(resets ReplyAckWindow ref)</text>
+      </g>
+      <line class="flow" x1="600" y1="408" x2="660" y2="408" marker-end="url(#arrow)"></line>
+
+      <g class="node">
+        <rect x="660" y="470" width="180" height="70" rx="4"></rect>
+        <text class="t" x="750" y="492">age ≥ EscalateAfter (12m)</text>
+        <text class="s" x="750" y="508">FallbackFunc → admin direct</text>
+        <text class="s" x="750" y="521">FallbackSentAt stamped on success</text>
+      </g>
+      <line class="flow" x1="750" y1="450" x2="750" y2="470" marker-end="url(#arrow)"></line>
+
+      <!-- ack path -->
+      <g class="node cobalt">
+        <rect x="200" y="380" width="170" height="60" rx="4"></rect>
+        <text class="t" x="285" y="402">ack_event tool</text>
+        <text class="s" x="285" y="418">Tracker.Ack(id, note)</text>
+        <text class="s" x="285" y="431">note required, non-empty</text>
+      </g>
+      <line class="flow" x1="285" y1="320" x2="285" y2="380" marker-end="url(#arrow)"></line>
+
+      <g class="node cobalt">
+        <rect x="20" y="380" width="150" height="60" rx="4"></rect>
+        <text class="t" x="95" y="402">NoteReply</text>
+        <text class="s" x="95" y="418">inferred ack if reply lands</text>
+        <text class="s" x="95" y="431">within ReplyAckWindow (2m)</text>
+      </g>
+      <line class="flow" x1="170" y1="410" x2="200" y2="410" marker-end="url(#arrow)"></line>
+
+      <g class="node term">
+        <rect x="20" y="470" width="330" height="60" rx="4"></rect>
+        <text class="t" x="185" y="492">status = acknowledged</text>
+        <text class="s" x="185" y="508">ReceiptFunc → one-line receipt to Jean</text>
+        <text class="s" x="185" y="521">pruned from disk after Retention (1h)</text>
+      </g>
+      <line class="flow" x1="285" y1="440" x2="185" y2="470" marker-end="url(#arrow)"></line>
+
+      <text class="flow-l" x="285" y="565">Reconcile() is idempotent per stage: NudgeAfter and</text>
+      <text class="flow-l" x="285" y="578">EscalateAfter each fire at most once, gated by a persisted</text>
+      <text class="flow-l" x="285" y="591">timestamp — a restart mid-escalation loses no state.</text>
+    </svg>
+  </figure>
+  <figcaption>Solid cobalt arrows = live call/data flow inside relayd; dashed grey = writes to the two JSON files (<code>schedules.json</code>, <code>pending_events.json</code>) that make both structures crash-safe. Teal boxes are the model/agent side of the boundary; plain vellum boxes are internal <code>Scheduler</code>/<code>Tracker</code> mechanics.</figcaption>
+</section>
+
+<h2 class="sec">What it is</h2>
+<p>The package comment says it plainly: <code>scheduler</code> is "a small, persistent reminder engine." It has two halves that live in the same package but do different jobs. <code>Scheduler</code> (scheduler.go) is the clock — it owns a <code>robfig/cron</code> runner and a map of <code>time.Timer</code>s, and calls a <code>DeliverFunc</code> when something is due. <code>Tracker</code> (events.go) is the conscience — it records that a fire actually happened as a <code>PendingEvent</code>, injects it into the session, and won't let it go until <code>ack_event</code> is called, nudging and then escalating to Jean directly if the agent ignores it. Neither type imports anything about Claude, Telegram, or Discord; the daemon wires <code>Scheduler</code>'s <code>DeliverFunc</code> to <code>Tracker.Fire</code>, and <code>Tracker</code>'s <code>InjectFunc</code>/<code>FallbackFunc</code>/<code>ReceiptFunc</code> to the actual session and frontend.</p>
+
+<div class="grid2">
+  <div class="card">
+    <h3>Cron vs one-shot</h3>
+    <p>A <code>Schedule</code> struct carries exactly one of <code>Cron</code> (a 5-field cron spec, parsed with <code>cron.ParseStandard</code>) or <code>FireAt</code> (an absolute instant, computed from <code>in_seconds</code> at <code>Create()</code> time). <code>Create()</code> rejects a call unless exactly one is set. <code>Recurring()</code> just checks <code>Cron != ""</code>. Recurring schedules get a real cron entry via <code>cron.AddFunc</code>; one-shots get a <code>time.AfterFunc</code>. A one-shot whose <code>FireAt</code> is already in the past when the process starts (missed while relayd was down) is armed with delay 0 — it fires almost immediately on load rather than being silently dropped.</p>
+  </div>
+  <div class="card">
+    <h3>Self-scheduling</h3>
+    <p>The model schedules itself: <code>schedule_message</code> is an MCP tool registered in <code>cmd/relay-shim/main.go</code> (<code>registerScheduleTools</code>), which calls straight into <code>Scheduler.Create</code>. There is no separate admin path — the same tool serves both "remind the user at 9am" (delivered via <code>reply</code> when it fires) and "wake myself up in 20 minutes to resume this task" (the <code>initialPrompt</code> text tells the agent to just continue). <code>list_schedules</code>/<code>cancel_schedule</code> wrap <code>List()</code>/<code>Cancel()</code>.</p>
+  </div>
+</div>
+
+<div class="grid2" style="margin-top:1rem;">
+  <div class="card">
+    <h3>Event lifecycle</h3>
+    <ul class="tight">
+      <li><b>Fire</b> — <code>Scheduler.fire(id)</code> calls <code>deliver()</code> (wired to <code>Tracker.Fire</code>) <em>before</em> deleting a one-shot's own record, so a crash between the two can't lose the event — worst case the schedule fires again and the tracker's coalescing (same <code>scheduleID</code>, still open) absorbs the duplicate.</li>
+      <li><b>Record</b> — <code>Tracker.Fire</code> creates a <code>PendingEvent{Status: StatusPending, FireCount: 1}</code> and persists it to <code>pending_events.json</code> (atomic tmp+rename) before doing anything else.</li>
+      <li><b>Deliver/inject</b> — exactly once, via <code>InjectFunc</code>, with <code>initialPrompt()</code> text instructing the agent to act and then call <code>ack_event</code>.</li>
+      <li><b>Nudge</b> — if still pending after <code>NudgeAfter</code> (default 5m), <code>Reconcile()</code> re-injects <code>nudgePrompt()</code> once, stamping <code>LastNudgeAt</code>.</li>
+      <li><b>Escalate</b> — if still pending after <code>EscalateAfter</code> (default 12m), <code>FallbackFunc</code> pings the admin (Jean) directly, stamped <code>FallbackSentAt</code> only on send success.</li>
+      <li><b>Ack</b> — explicit via <code>ack_event</code> (<code>Tracker.Ack</code>, requires a non-empty note) or inferred via <code>NoteReply</code> if a reply lands within <code>ReplyAckWindow</code> (2m) of the fire/nudge.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Delivery vs. escalation</h3>
+    <p>Injection happens exactly once at <code>Fire</code> time — the comment in the code is explicit that the Claude endpoint's <code>Send</code> is "lossless-buffered," so an undelivered inject is not lost and re-sending it every reconcile tick would just spam duplicates. <code>Reconcile()</code> only ever adds <em>new</em> stages (nudge, then fallback), each gated by its own persisted timestamp so it fires at most once and survives a restart mid-escalation. A fully-escalated event (fallback already sent) that fires again via its recurring schedule is treated as a fresh delivery — <code>FiredAt</code>/<code>DeliveredAt</code>/<code>LastNudgeAt</code>/<code>FallbackSentAt</code> are all reset — so one stuck event can't permanently suppress a recurring reminder.</p>
+  </div>
+</div>
+
+<h2 class="sec" style="margin-top:2rem;">Persistence and external edits</h2>
+<p>Both files (<code>schedules.json</code>, <code>pending_events.json</code>) are written atomically (temp file + <code>os.Rename</code>) and reloaded on startup (<code>load()</code>), which is what makes the whole thing crash-safe: <code>Tracker</code> has no per-event timers at all — <code>Reconcile</code> derives everything due from wall-clock comparisons against persisted timestamps on a 30s ticker, so a restart at any point needs no re-arming logic. <code>Scheduler</code> additionally runs an <code>fsnotify</code> watcher on the directory holding <code>schedules.json</code> (not the file itself, since save's rename swaps the inode); a hand-edit while relayd is running is diffed in <code>reconcileFromFile()</code>, re-armed, tagged <code>Source: SourceFile</code>, and — if an <code>ExternalFunc</code> is wired — surfaced to the agent as a heads-up. Deletions in the file are deliberately ignored (never disarms a running schedule from an external edit) to avoid a hand-edit silently killing something live.</p>
+
+<div class="foot">agent-relay · internal/scheduler/scheduler.go + events.go · researched from source, 2026-08</div>
+</main>
+</body>
+</html>
