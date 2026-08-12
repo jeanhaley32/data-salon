@@ -64,6 +64,23 @@
   .tick.bl{bottom:10px;left:10px;border-right:0;border-top:0}
   .tick.br{bottom:10px;right:10px;border-left:0;border-top:0}
   @media(max-width:640px){body{font-size:1.05rem}.tick{display:none}}
+
+  .pull{font-family:var(--serif);font-size:clamp(1.3rem,3.2vw,1.7rem);line-height:1.34;color:var(--fg);border-left:3px solid var(--cobalt);padding:.1rem 0 .1rem 1.3rem;margin:0 0 2.4rem;text-wrap:balance;}
+  figure{margin:2.2rem 0;}
+  figure.sysfig{background:var(--plate);border:1px solid var(--line);border-radius:2px;padding:1.2rem 1.2rem .7rem;}
+  figure.sysfig svg{width:100%;max-width:940px;height:auto;display:block;margin:0 auto;}
+  figcaption{font-family:var(--mono);font-size:.71rem;letter-spacing:.03em;color:var(--graphite);margin-top:.8rem;text-align:center;}
+  .sysfig{--vellum:var(--plate);--rule-strong:#9aa4b2;--teal-soft:rgba(0,120,106,.12);--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .sysfig .node rect{fill:var(--vellum);stroke:var(--rule-strong);stroke-width:1.4;}
+  .sysfig .node.cobalt rect{fill:#fbfcff;stroke:var(--cobalt);stroke-width:1.6;}
+  .sysfig .node.term rect{fill:var(--teal-soft);stroke:var(--teal);stroke-width:1.6;}
+  .sysfig .node .t{font-family:var(--sans);font-weight:650;font-size:13px;fill:var(--ink);text-anchor:middle;}
+  .sysfig .node.term .t{fill:var(--teal);}
+  .sysfig .node.cobalt .t{fill:var(--cobalt);}
+  .sysfig .node .s{font-family:var(--mono);font-size:8.5px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
+  .sysfig .flow{stroke:var(--cobalt);stroke-width:1.8;fill:none;}
+  .sysfig .flow.soft{stroke:var(--rule-strong);}
+  .sysfig .flow-l{font-family:var(--mono);font-size:9px;fill:var(--graphite);letter-spacing:.05em;text-anchor:middle;}
 </style>
 </head>
 <body>
@@ -73,14 +90,49 @@
 
 <div class="wrap">
 <header class="post">
-  <div class="eyebrow">Data Salon · the short version</div>
+  <div class="eyebrow">Data Salon · field notes</div>
   <h1>Building a Home Control Plane From Parts</h1>
-  <p class="standfirst">The talk in about 450 words: how a message relay grew, one part at a time, into the control plane for a whole home lab.</p>
+  <p class="standfirst">How a message relay grew, one part at a time, into the control plane for a whole home lab.</p>
   <div class="byline"><span>By <b>Jean Haley</b></span><span>·</span><span>Site Reliability Engineer</span><span>·</span><span>Data Salon, Aug 2026</span></div>
 </header>
 
+<p class="pull">“Complex systems that work tend to grow from simple systems that work.”</p>
+
 <article>
 <p class="lede">I set out to build one small thing: a way to detach a work session from my desk, so I could close my laptop, walk away, and keep working from my phone through a secure chat interface. What it became, by accident, was the control plane for my entire home lab, running on a single salvaged ThinkPad.</p>
+<figure class="sysfig"><svg class="d" viewBox="0 0 1080 380" role="img" aria-label="Bird's-eye view of the system. Chat clients (Telegram and Discord) enter through relayd's gate. relayd feeds one live Claude Code session at the center of the vessel, the ThinkPad. Around the model inside the vessel sit the scheduler, the observability stack (Prometheus, Loki, Grafana), the k3s cluster, and BLE and network sensors, all connected to the model. The whole vessel sits on a single Tailscale egress built on WireGuard.">
+          <defs><marker id="be" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1633e0"/></marker>
+          <marker id="bet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00786a"/></marker></defs>
+
+          <!-- ingress: chat clients -> relayd -->
+          <g class="node"><rect x="16" y="150" width="150" height="70" rx="9"/><text class="t" x="91" y="180" style="font-size:12px;">Chat clients</text><text class="s" x="91" y="197">Telegram · Discord</text></g>
+          <line class="flow" x1="166" y1="185" x2="214" y2="185" marker-end="url(#be)"/>
+          <g class="node cobalt"><rect x="216" y="150" width="150" height="70" rx="9"/><text class="t" x="291" y="180" fill="#1633e0" style="font-size:12.5px;">relayd</text><text class="s" x="291" y="197">gate · auth · budget</text></g>
+          <line class="flow" x1="366" y1="185" x2="430" y2="185" marker-end="url(#be)"/>
+
+          <!-- vessel container -->
+          <rect x="432" y="34" width="632" height="286" rx="14" fill="#fbfcff" stroke="#1633e0" stroke-width="1.6"/>
+          <text x="452" y="58" style="font-family:monospace;font-size:10px;letter-spacing:.12em;fill:#1633e0;">RODIN · THINKPAD T480 — THE VESSEL</text>
+
+          <!-- model at center -->
+          <g class="node term"><rect x="628" y="150" width="240" height="72" rx="10"/><text class="t" x="748" y="182">Claude Code</text><text class="s" x="748" y="200">one live session</text></g>
+
+          <!-- satellites -->
+          <g class="node"><rect x="456" y="78" width="180" height="52" rx="8"/><text class="t" x="546" y="100" style="font-size:11.5px;">Scheduler</text><text class="s" x="546" y="116">cron · self-wake</text></g>
+          <g class="node"><rect x="860" y="78" width="188" height="52" rx="8"/><text class="t" x="954" y="100" style="font-size:11.5px;">Observability</text><text class="s" x="954" y="116">Prometheus · Loki · Grafana</text></g>
+          <g class="node"><rect x="456" y="240" width="180" height="52" rx="8"/><text class="t" x="546" y="262" style="font-size:11.5px;">k3s cluster</text><text class="s" x="546" y="278">most services</text></g>
+          <g class="node"><rect x="860" y="240" width="188" height="52" rx="8"/><text class="t" x="954" y="262" style="font-size:11.5px;">Sensors</text><text class="s" x="954" y="278">BLE · network · router</text></g>
+
+          <!-- connectors model <-> satellites -->
+          <line class="flow soft" x1="636" y1="150" x2="600" y2="120" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="118" x2="820" y2="152" marker-end="url(#bet)"/>
+          <line class="flow soft" x1="636" y1="220" x2="600" y2="252" marker-end="url(#be)"/>
+          <line class="flow soft" x1="860" y1="252" x2="820" y2="220" marker-end="url(#bet)"/>
+
+          <!-- tailscale egress bar -->
+          <rect x="432" y="332" width="632" height="34" rx="8" fill="#e2f5f1" stroke="#00786a" stroke-width="1.4"/>
+          <text x="748" y="354" text-anchor="middle" style="font-family:monospace;font-size:10.5px;letter-spacing:.06em;fill:#00786a;">Tailscale — single controlled egress · WireGuard</text>
+        </svg><figcaption>The whole system at a glance: chat in through the relay, one live model session at the center, scheduler, observability, k3s and sensors around it, everything behind a single controlled egress.</figcaption></figure>
 
 <p>The method was the point. I don't design big systems up front. I define the smallest version that solves the task, decompose it into components with clean boundaries, and build interfaces between them. That makes each piece extensible, and it means the next problem can usually be solved by adding one more part rather than rebuilding.</p>
 
@@ -100,7 +152,7 @@
 <p>None of this was on a roadmap. I built the parts, each with a clean edge, and the platform emerged from setting them next to each other. That's the whole point: complex systems that work tend to grow from simple systems that work.</p>
 
 <footer class="post">
-  <p>This is the short version. The full write-up is at <a href="/data-salon/writeup">/writeup</a>, and everything behind the talk is at <a href="/data-salon">/salon</a>.</p>
+  <p>The full write-up is at <a href="/data-salon/writeup">/writeup</a>, and everything behind the talk is at <a href="/data-salon">/salon</a>.</p>
 </footer>
 </article>
 </div>
