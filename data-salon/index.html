@@ -93,10 +93,11 @@ footer b{color:var(--ink);}
 
   @keyframes spin{to{transform:rotate(360deg);}}
   @keyframes breathe{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  @keyframes travel{from{offset-distance:0%}to{offset-distance:100%}}
+  .machine-feature .portrait .nerve-dot{offset-path:path("M672 232 C812 176 906 244 882 330 C864 392 792 388 706 348");offset-distance:0%;animation:travel 3.4s linear infinite;}
   .machine-feature{display:grid;grid-template-columns:1fr;gap:1.2rem;background:var(--plate);border:1px solid var(--line);border-radius:2px;padding:1.6rem;box-shadow:0 1px 0 rgba(14,17,22,.04),0 24px 50px -30px rgba(22,51,224,.2);}
   .machine-feature .portrait{width:100%;max-width:900px;height:auto;display:block;margin:.3rem auto 0;}
-  .machine-feature .portrait [style*="animation"]{transform-box:fill-box;transform-origin:center;}
-  @media (prefers-reduced-motion:reduce){.machine-feature .portrait [style*="animation"]{animation:none!important;}}
+  @media (prefers-reduced-motion:reduce){.machine-feature .portrait [style*="animation"],.machine-feature .portrait .nerve-dot{animation:none!important;}}
 </style></head><body>
 
 <nav><div class="in">
