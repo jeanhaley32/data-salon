@@ -99,6 +99,29 @@ h2{font-size:clamp(34px,5vw,56px);line-height:1.05;margin-top:10px}
 .tablet b{font-family:var(--display);font-size:24px;font-weight:600;display:block;line-height:1.2}
 .tablet span{color:var(--ink-soft);font-size:15.5px}
 
+/* gift shop */
+.shop .shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;margin-top:48px}
+.item{background:#f4efe5;color:#24201b;border-radius:2px;box-shadow:0 14px 30px rgba(0,0,0,.45);display:flex;flex-direction:column;min-width:0}
+.item .art{height:170px;display:grid;place-items:center;background:linear-gradient(160deg,#2b261f,#15130f);border-bottom:3px solid var(--brass)}
+.item .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
+.item h3{font-size:23px;color:#1a1611;line-height:1.15}
+.item p{margin:0;font-size:14.5px;color:#4a4238}
+.item .tag{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:#6d6252;border-top:1px dashed #cfc5b3}
+.item .tag b{color:#8a5a1e;font-weight:500}
+.shop-note{margin-top:26px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);letter-spacing:.03em}
+/* tiny illustrations */
+.mug{width:78px;height:86px;border:4px solid var(--brass);border-radius:0 0 14px 14px;position:relative;display:grid;place-items:center;font-family:var(--mono);font-size:20px;color:var(--brass)}
+.mug::after{content:"";position:absolute;right:-26px;top:16px;width:22px;height:38px;border:4px solid var(--brass);border-left:none;border-radius:0 16px 16px 0}
+.tote{width:96px;height:100px;border:3px solid var(--plaster);border-top-width:3px;position:relative;margin-top:20px;display:grid;place-items:center;font-family:var(--display);font-style:italic;font-size:17px;color:var(--plaster);text-align:center;line-height:1.05}
+.tote::before{content:"";position:absolute;top:-26px;left:24px;width:46px;height:30px;border:3px solid var(--plaster);border-bottom:none;border-radius:24px 24px 0 0}
+.globe{width:92px;height:92px;border-radius:50%;border:3px solid #9fc3c9;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),rgba(159,195,201,.06) 60%);position:relative;display:grid;place-items:center}
+.globe i{width:44px;height:28px;background:#3a3530;border:2px solid var(--brass);border-radius:3px;display:block;transform:translateY(10px)}
+.globe::after{content:"";position:absolute;bottom:-16px;left:14px;width:64px;height:14px;background:var(--brass-soft);border-radius:3px}
+.pin{width:96px;height:96px;border-radius:50%;background:var(--brass);display:grid;place-items:center;color:#1a1611;font-family:var(--display);font-style:italic;font-size:14.5px;text-align:center;line-height:1.05;padding:10px;box-shadow:inset 0 0 0 4px #d8b47c}
+.card{width:120px;height:80px;background:#f4efe5;transform:rotate(-6deg);box-shadow:0 6px 12px rgba(0,0,0,.5);overflow:hidden}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.book{width:74px;height:100px;background:#1a1611;border-left:8px solid var(--brass);display:grid;place-items:center;font-family:var(--display);font-style:italic;color:var(--brass);font-size:15px;text-align:center;line-height:1.05;padding:6px}
+
 /* exit */
 .exit{text-align:center;padding-block:100px 120px}
 .exit p{margin:18px auto 0;max-width:56ch;color:var(--ink-soft)}
@@ -122,6 +145,7 @@ h2{font-size:clamp(34px,5vw,56px);line-height:1.05;margin-top:10px}
       <a href="#relay">III · The Relay</a>
       <a href="#memory">IV · Memory</a>
       <a href="#rules">V · The Rules</a>
+      <a href="#shop">VI · The Gift Shop</a>
     </nav>
     <div class="hours">
       <div><b>Named</b>5 July 2026, by a friend</div>
@@ -261,9 +285,26 @@ h2{font-size:clamp(34px,5vw,56px);line-height:1.05;margin-top:10px}
   </div>
 </section>
 
+<section class="room shop" id="shop">
+  <div class="wrap">
+    <div class="eyebrow">Room VI · The Gift Shop</div>
+    <h2>Take a little Rodin home</h2>
+    <p class="lede">Every object here is imaginary, and every price is paid the way Rodin's edits are: you press Apply. Nothing in this room is actually for sale.</p>
+    <div class="shelf">
+      <article class="item"><div class="art"><div class="mug">80%</div></div><div class="body"><h3>The 80% Mug</h3><p>Holds exactly as much as a week's usage limit, and refills itself on Saturday.</p><div class="tag"><span>Ceramic, imaginary</span><b>1 Apply</b></div></div></article>
+      <article class="item"><div class="art"><div class="tote">I fixed<br>your tpoy</div></div><div class="body"><h3>Typo Tote</h3><p>The misprint on the bag is the point. Rodin has already corrected it in the next batch.</p><div class="tag"><span>Canvas, live-synced</span><b>1 Apply</b></div></div></article>
+      <article class="item"><div class="art"><div class="globe"><i></i></div></div><div class="body"><h3>ThinkPad Snow Globe</h3><p>Shake it and the lid stays shut, the fans keep spinning, and nothing ever goes to sleep.</p><div class="tag"><span>Glass, always on</span><b>2 Applies</b></div></div></article>
+      <article class="item"><div class="art"><div class="pin">Saying nothing is a fine answer</div></div><div class="body"><h3>Enamel Pin</h3><p>The house rule for listening mode, as a pin. It is worn quietly.</p><div class="tag"><span>Brass, unspoken</span><b>1 Apply</b></div></div></article>
+      <article class="item"><div class="art"><div class="card"><img src="poster.jpg" alt="A frame from the tour: the relay map drawn beside the document."></div></div><div class="body"><h3>Relay Map Postcard</h3><p>One message's route, from you to the gate, the relay and Claude, and back as a pending edit.</p><div class="tag"><span>Card stock, tailnet only</span><b>1 Apply</b></div></div></article>
+      <article class="item"><div class="art"><div class="book">In memoriam<br>25 Oct</div></div><div class="body"><h3>The Elegy, Chapbook</h3><p>A small book of the day the home directory went quiet, and the weekend spent bringing it back. <a href="../elegy/">Read it free</a>.</p><div class="tag"><span>Paper, restored from backup</span><b>Free</b></div></div></article>
+    </div>
+    <p class="shop-note">No payments are taken here. The register is a pending list, and you can always press Reject.</p>
+  </div>
+</section>
+
 <footer class="room exit">
   <div class="wrap">
-    <div class="eyebrow">Exit through the gift shop</div>
+    <div class="eyebrow">Exit</div>
     <h2>Thank you for visiting</h2>
     <p>Rodin wrote this page and Jean recorded the tour. The machine it describes was running the whole time.</p>
     <div class="guestbook">rodin.stochastic-engine.com · built 27 October 2026</div>
