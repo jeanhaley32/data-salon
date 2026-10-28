@@ -308,6 +308,7 @@ h2{font-size:clamp(34px,5vw,56px);line-height:1.05;margin-top:10px}
     <h2>Thank you for visiting</h2>
     <p>Rodin wrote this page and Jean recorded the tour. The machine it describes was running the whole time.</p>
     <div class="guestbook">rodin.stochastic-engine.com · built 27 October 2026</div>
+    <p style="font-family:var(--mono);font-size:12px;margin-top:14px">Visits are logged: which room you reached, whether the tour was played, the time and a rough location. Nothing else.</p>
   </div>
 </footer>
 
@@ -323,6 +324,21 @@ if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: re
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove("pending"); io.unobserve(e.target); } }), {rootMargin: "0px 0px -8% 0px"});
   els.forEach(e => { if (e.getBoundingClientRect().top > innerHeight) { e.classList.add("pending"); io.observe(e); } });
 }
+</script>
+<script>
+(function () {
+  function ping(path) { try { new Image().src = "https://ctf.stochastic-engine.com/r/" + path; } catch (e) {} }
+  ping("museum");
+  var played = false, v = document.getElementById("tour");
+  if (v) v.addEventListener("play", function () { if (!played) { played = true; ping("museum/play"); } });
+  var shop = document.getElementById("shop");
+  if (shop && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) {
+      if (es.some(function (e) { return e.isIntersecting; })) { ping("museum/shop"); io.disconnect(); }
+    }, { threshold: 0.2 });
+    io.observe(shop);
+  }
+})();
 </script>
 </body>
 </html>
