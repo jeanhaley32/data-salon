@@ -4,329 +4,434 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Rodin Collection</title>
-<meta name="description" content="A museum walkthrough of Rodin, a thinking machine that lives on a ThinkPad, with a recorded tour of the writer it shares with its owner.">
+<meta name="description" content="A museum walkthrough of Rodin, a Claude session that lives on a ThinkPad, with a recorded tour of the writer it shares with its owner.">
+<meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Layout: a single corridor of rooms. Each room has a wall (dark, lit from above), a framed exhibit and a museum placard. */
+/* A 1970s natural history museum. Jost carries the Futura-era signage and the docent's voice.
+   Courier Prime is the typewriter on the specimen labels and drawer cards.
+   Each hall has a signage colour from an earthy set (walnut, olive, teal, rust, stone, ochre, dusty blue),
+   repeated on the floor plan so the map and the halls agree. Cream appears only as label card stock. */
 :root{
-  --plaster:#ece6da; --wall:#1d1b18; --wall-2:#26231f; --ink:#ece6da; --ink-soft:#b9b0a1;
-  --brass:#b8925a; --brass-soft:#8a6d43; --placard:#f4efe5; --placard-ink:#24201b; --rule:#3a352e;
-  --display:"Cormorant Garamond", "Iowan Old Style", Georgia, serif;
-  --body:"Source Serif 4", Georgia, serif;
-  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --wall:#e7e2d7; --ink:#2a2118; --soft:#5e5244; --rule:#c8bea9; --link:#4f5f22; --focus:#2a2118;
+  --card:#f4eee0; --card-ink:#2a2118; --card-soft:#5e5244; --card-rule:#d6ccb6;
+  --wood:#4a3020; --wood-hi:#6b4a2f; --case-bg:#dde2da; --glass:#f3f6f1; --brass:#b5893d;
+  --ochre:#c48a26; --rust:#9c4a22; --umber:#4a3020;
+  --sans:"Jost", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  --type:"Courier Prime", "Courier New", ui-monospace, monospace;
+  --gutter:max(20px, env(safe-area-inset-left, 0px));
 }
+@media (prefers-color-scheme:dark){
+  :root{
+    --wall:#1f1912; --ink:#ece4d2; --soft:#b9ad96; --rule:#3e3427; --link:#b9c77a; --focus:#ece4d2;
+    --card:#2b231a; --card-ink:#ece4d2; --card-soft:#b9ad96; --card-rule:#45392b;
+    --wood:#3a2618; --wood-hi:#5a3d26; --case-bg:#232822; --glass:#2c322b;
+  }
+}
+/* hall signage colours */
+.c1{--c:#4a3020;--c-ink:#f6eedd}
+.c2{--c:#5b6a2b;--c-ink:#fbf6e9}
+.c3{--c:#2e5e5b;--c-ink:#f4f1e6}
+.c4{--c:#9c4a22;--c-ink:#fbf1e4}
+.c5{--c:#34322e;--c-ink:#e9e3d4}
+.c6{--c:#c48a26;--c-ink:#221a10}
+.c7{--c:#7392a8;--c-ink:#131a20}
+
 *{box-sizing:border-box}
-html{background:var(--wall)}
-body{margin:0;background:var(--wall);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
-a{color:var(--brass)}
-a:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:3px}
-.wrap{max-width:1120px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+html{background:var(--wall);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--wall);color:var(--ink);font:400 18px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--link);text-underline-offset:.2em;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:var(--gutter);top:-60px;background:var(--ink);color:var(--wall);padding:8px 14px;border-radius:6px;font:500 15px var(--sans);z-index:2}
+.skip:focus{top:28px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:var(--gutter) max(20px, env(safe-area-inset-right, 0px))}
+h1,h2,h3{margin:0;font-family:var(--sans);font-weight:500;letter-spacing:0;text-wrap:balance}
+p{margin:0}
+.stripes{height:18px;background:linear-gradient(to bottom,var(--ochre) 0 6px,var(--rust) 6px 12px,var(--umber) 12px 18px)}
 
-/* the ceiling lights: each room is lit by a soft cone from above */
-.room{position:relative;padding-block:96px 104px;border-top:1px solid var(--rule);overflow:hidden}
-.room::before{content:"";position:absolute;inset:-20% 10% auto;height:520px;pointer-events:none;
-  background:radial-gradient(ellipse 50% 60% at 50% 0%, rgba(255,236,200,.10), transparent 70%)}
-.room:nth-child(even){background:var(--wall-2)}
+/* ---- Foyer ---- */
+.foyer{padding-block:clamp(36px,7vw,80px) clamp(48px,8vw,96px)}
+.kicker{font:500 14px/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--soft)}
+h1{font-size:clamp(84px,20vw,240px);font-weight:500;line-height:.9;letter-spacing:-.02em;margin-top:12px}
+.foyer-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(28px,5vw,64px);margin-top:clamp(24px,4vw,44px);align-items:start}
+.foyer .lede{font-size:clamp(20px,2.3vw,26px);line-height:1.45;font-weight:400;max-width:34ch}
+.info{background:var(--card);color:var(--card-ink);border:1px solid var(--card-rule);border-radius:6px;padding:18px 20px}
+.info h2{font:600 13px var(--sans);letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}
+.info dl{margin:0;display:grid;gap:8px}
+.info div{display:grid;grid-template-columns:7em minmax(0,1fr);gap:10px;border-top:1px dashed var(--card-rule);padding-top:8px}
+.info dt{font:400 14px/1.6 var(--type);color:var(--card-soft)}
+.info dd{margin:0;font-size:17px}
+@media (max-width:860px){.foyer-grid{grid-template-columns:1fr}}
 
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--brass)}
-h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0}
-h1{font-size:clamp(48px,9vw,108px);line-height:.95;letter-spacing:-.01em}
-h1 em{font-style:italic;color:var(--brass)}
-h2{font-size:clamp(34px,5vw,56px);line-height:1.05;margin-top:10px}
-.lede{font-size:clamp(18px,2.1vw,22px);color:var(--ink-soft);max-width:60ch;margin-top:22px}
+/* floor plan: the wayfinding map, coloured like the hall signs */
+.plan{margin-top:clamp(40px,6vw,64px)}
+.plan h2{font:600 13px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-bottom:10px}
+.plan ol{list-style:none;margin:0;padding:10px;border:3px solid var(--ink);border-radius:10px;display:grid;gap:8px;
+  grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(92px,auto);
+  grid-template-areas:"hall hall machine relay" "hall hall memory memorial" "foyer rules shop shop"}
+.plan li{min-width:0}
+.plan a,.plan .here{display:flex;flex-direction:column;justify-content:space-between;gap:10px;height:100%;padding:12px 14px;border-radius:6px;
+  background:var(--c);color:var(--c-ink);text-decoration:none;font:500 16px/1.2 var(--sans)}
+.plan a:hover{box-shadow:inset 0 0 0 3px var(--c-ink)}
+.plan .pn{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:2px solid currentColor;font:600 14px var(--sans)}
+.plan .here{background:transparent;color:var(--ink);border:2px dashed var(--rule)}
+.plan .here i{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--rust);margin-right:8px;vertical-align:-1px}
+.p-hall{grid-area:hall}.p-machine{grid-area:machine}.p-relay{grid-area:relay}.p-memory{grid-area:memory}
+.p-memorial{grid-area:memorial}.p-rules{grid-area:rules}.p-shop{grid-area:shop}.p-foyer{grid-area:foyer}
+@media (max-width:560px){.plan ol{grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-areas:"hall hall" "machine relay" "memory memorial" "rules shop" "foyer foyer";grid-auto-rows:minmax(84px,auto)}}
 
-/* foyer */
-.foyer{padding-block:120px 110px;text-align:left}
-.foyer .doors{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:44px;font-family:var(--mono);font-size:13px;letter-spacing:.06em}
-.foyer .doors a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:3px}
-.foyer .doors a:hover{color:var(--brass);border-color:var(--brass)}
-.hours{margin-top:56px;display:flex;flex-wrap:wrap;gap:28px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);letter-spacing:.04em}
-.hours b{display:block;color:var(--ink);font-weight:500;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+/* ---- Hall signs ---- */
+.room{padding-bottom:clamp(56px,9vw,104px)}
+.sign{background:var(--c);color:var(--c-ink)}
+.sign-in{display:flex;align-items:center;gap:clamp(14px,2.5vw,24px);padding-block:clamp(16px,2.5vw,22px)}
+.plaque{flex:none;display:grid;place-items:center;width:clamp(56px,8vw,76px);aspect-ratio:1;border-radius:50%;border:3px solid currentColor;font:500 clamp(20px,3vw,28px)/1 var(--sans)}
+.hall-no{display:block;font:500 13px/1.3 var(--sans);letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.sign h2{font-size:clamp(28px,4.4vw,48px);line-height:1.05;font-weight:500}
+.room-body{padding-top:clamp(36px,5vw,56px)}
+.room .lede{font-size:clamp(19px,2vw,23px);line-height:1.5;max-width:42ch}
 
-/* exhibit layout: object + placard */
-.exhibit{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:44px;margin-top:48px;align-items:start}
-@media (max-width:860px){.exhibit{grid-template-columns:1fr}}
+/* specimen label: typewritten card stock */
+.label-card{background:var(--card);color:var(--card-ink);border:1px solid var(--card-rule);border-radius:4px;padding:18px 20px 16px;font-size:16.5px;line-height:1.55;max-width:46ch;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.label-card .cat{font:700 14px var(--type);letter-spacing:.04em;border-bottom:3px double var(--card-ink);padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;gap:12px}
+.label-card h3{font-size:22px;font-weight:600;line-height:1.2}
+.label-card .medium{font:italic 400 15px/1.5 var(--type);color:var(--card-soft);margin:4px 0 10px}
+.label-card p + p{margin-top:10px}
+.label-card .credit{margin-top:12px;padding-top:8px;border-top:1px dashed var(--card-rule);font:400 14px/1.5 var(--type);color:var(--card-soft)}
 
-/* the frame: brass liner, deep mat */
-.frame{position:relative;padding:18px;background:linear-gradient(145deg,#3b3328,#1a1712);border-radius:3px;
-  box-shadow:0 30px 60px rgba(0,0,0,.55),0 0 0 1px #4d4232 inset}
-.frame .mat{background:#0e0d0b;padding:10px;box-shadow:0 0 0 1px var(--brass-soft)}
-.frame video,.frame img,.frame svg{display:block;width:100%;height:auto;background:#000}
+/* ---- Hall I: the diorama theatre, always dark ---- */
+.hall{--ink:#efe7d6;--soft:#b9ad96;--rule:#3a3026;--link:#d9b25a;--focus:#efe7d6;
+  --card:#f1e9d7;--card-ink:#2a2118;--card-soft:#5e5244;--card-rule:#d2c7b0;background:#17110c;color:var(--ink)}
+.diorama{margin:clamp(32px,5vw,56px) auto 0;max-width:1440px;padding-inline:clamp(0px,2vw,24px)}
+.diorama .case{border:clamp(6px,1.2vw,14px) solid #5a3a22;border-radius:8px;background:#000;box-shadow:inset 0 0 0 2px #7a5634,0 18px 40px rgba(0,0,0,.5)}
+.diorama video{display:block;width:100%;height:auto;max-height:86vh;max-height:86svh;background:#000;border-radius:2px}
+.hall-notes{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,4vw,56px);margin-top:clamp(32px,4vw,48px)}
+@media (max-width:900px){.hall-notes{grid-template-columns:1fr}.hall-notes .label-card{order:2}}
+.chapters-h{font:600 13px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-bottom:10px}
+.chapters{list-style:none;margin:0;padding:0;columns:2 18rem;column-gap:24px}
+.chapters li{break-inside:avoid;border-bottom:1px solid var(--rule)}
+.chapters button{display:grid;grid-template-columns:4.4em minmax(0,1fr);gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:6px;
+  color:var(--ink);font:400 16.5px/1.35 var(--sans);padding:11px 10px;margin:2px 0;cursor:pointer;min-height:44px;align-items:baseline}
+.chapters .t{font:700 15px var(--type);color:#d9b25a;font-variant-numeric:tabular-nums}
+.chapters button:hover{background:#2a2017}
+.chapters button[aria-current="true"]{background:#2e2318;font-weight:500}
+.chapters button[aria-current="true"] .t::before{content:"";display:inline-block;width:.55em;height:.55em;border-radius:50%;background:#d9b25a;margin-right:.35em;vertical-align:.05em}
 
-/* placard */
-.placard{background:var(--placard);color:var(--placard-ink);padding:22px 24px 20px;border-radius:2px;
-  box-shadow:0 12px 26px rgba(0,0,0,.4);font-size:15.5px;line-height:1.6;min-width:0}
-.placard .no{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:#7a6a52}
-.placard h3{font-size:27px;margin:6px 0 2px;color:#1a1611}
-.placard .medium{font-style:italic;color:#5b5246;margin-bottom:12px}
-.placard p{margin:0 0 10px}
-.placard .credit{border-top:1px solid #d8cfbf;margin-top:14px;padding-top:10px;font-family:var(--mono);font-size:11.5px;color:#6d6252;letter-spacing:.03em}
+/* ---- Hall II: the specimen case ---- */
+.specimen{margin:clamp(32px,4vw,48px) 0 0}
+.specimen .case{border:clamp(8px,1.4vw,14px) solid var(--wood);border-bottom-width:clamp(18px,3vw,30px);border-radius:8px 8px 4px 4px;
+  background:linear-gradient(135deg,rgba(255,255,255,.28) 0 18%,rgba(255,255,255,0) 18% 100%),var(--case-bg);box-shadow:inset 0 0 0 2px var(--wood-hi);padding:clamp(12px,3vw,32px)}
+.specimen svg{display:block;width:100%;height:auto}
+.sp .hull{fill:var(--glass);stroke:var(--ink);stroke-width:2.5}
+.sp .edge{fill:var(--rule);stroke:var(--ink);stroke-width:2}
+.sp .cut{fill:none;stroke:var(--soft);stroke-width:1.5;stroke-dasharray:5 5}
+.sp .part{fill:none;stroke:var(--ink);stroke-width:2}
+.sp .fill{fill:var(--ink)}
+.sp .lead{stroke:var(--ink);stroke-width:1.5}
+.sp .dot{fill:var(--ochre);stroke:var(--ink);stroke-width:2}
+.sp .num{font:600 20px var(--sans);fill:#221a10}
+.specimen figcaption{margin-top:12px;font:400 14.5px/1.5 var(--type);color:var(--soft)}
+.key{list-style:none;margin:clamp(24px,3vw,36px) 0 0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.key .label-card{max-width:none;height:100%}
+.key .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ochre);color:#221a10;font:600 15px var(--sans);margin-right:10px;vertical-align:2px}
+@media (max-width:640px){.key{grid-template-columns:1fr}}
 
-/* the main presentation */
-.theatre{margin-top:52px}
-.theatre .frame{padding:26px}
-.chapters{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
-.chapters button{font-family:var(--mono);font-size:12.5px;background:transparent;color:var(--ink-soft);border:1px solid var(--rule);
-  padding:7px 12px;border-radius:999px;cursor:pointer;letter-spacing:.03em}
-.chapters button:hover{border-color:var(--brass);color:var(--brass)}
-.chapters button .t{color:var(--brass);margin-right:6px}
+/* ---- Hall III: the route ---- */
+.route{margin:clamp(32px,4vw,48px) 0 0}
+.route ol{list-style:none;margin:0;padding:0}
+.route .step{display:grid;grid-template-columns:48px minmax(0,1fr);gap:2px 16px;padding:14px 0;border-top:1px solid var(--rule)}
+.route .step:first-child{border-top:2px solid var(--ink)}
+.route .step .n{grid-row:span 2;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#2e5e5b;color:#f4f1e6;font:600 17px var(--sans)}
+.route b{font:600 19px/1.3 var(--sans)}
+.route .step span:not(.n){color:var(--soft);font-size:16px;line-height:1.45}
+.fork{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:4px}
+.fork .back{font:400 15px/1.45 var(--type);color:var(--ink);margin:2px 0 0 64px}
+@media (max-width:560px){.fork{grid-template-columns:1fr;gap:6px}}
+.route figcaption{margin-top:14px;font:400 14.5px/1.5 var(--type);color:var(--soft)}
+.after{margin-top:clamp(32px,5vw,48px)}
 
-/* vitrine cards for smaller objects */
-.vitrines{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;margin-top:48px}
-.vitrine{border:1px solid var(--rule);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent);padding:24px 22px;min-width:0}
-.vitrine .no{font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;color:var(--brass);text-transform:uppercase}
-.vitrine h3{font-size:25px;margin:8px 0 8px}
-.vitrine p{margin:0;color:var(--ink-soft);font-size:15.5px}
+/* ---- Hall IV: the card drawer ---- */
+.drawer{list-style:none;margin:clamp(32px,4vw,48px) 0 0;padding:clamp(12px,2vw,18px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  background:var(--wood);border-radius:8px;box-shadow:inset 0 0 0 2px var(--wood-hi)}
+.drawer .label-card{max-width:none;height:100%;position:relative;padding-bottom:34px}
+.drawer .label-card::after{content:"";position:absolute;left:50%;bottom:12px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--wood);opacity:.85}
+@media (max-width:760px){.drawer{grid-template-columns:1fr}}
 
-/* diagram room */
-.diagram text{font-family:var(--body);fill:var(--ink)}
-.diagram .lab{font-family:var(--mono);font-size:11px;fill:var(--ink-soft);letter-spacing:.04em}
-.diagram .box{fill:#14120f;stroke:var(--brass-soft);stroke-width:1.2}
-.diagram .you{fill:#2a2216;stroke:var(--brass)}
-.diagram .ln{stroke:var(--brass);stroke-width:1.4;fill:none}
-.diagram .dash{stroke-dasharray:4 5}
-.step{fill:var(--brass)}
-.step-t{font-family:var(--mono);font-size:11px;fill:#1a1611;font-weight:500}
+/* ---- Hall V: the memorial hall, stone and bronze, quieter than every other room ---- */
+.memorial{background:#2c2a26;color:#e9e3d4;text-align:center;padding-block:clamp(72px,12vw,140px);--focus:#e9e3d4}
+@media (prefers-color-scheme:dark){.memorial{background:#121110}}
+.memorial .wrap{max-width:760px}
+.memorial .tablet{border:1px solid #6d6556;border-radius:4px;padding:clamp(36px,7vw,72px) clamp(20px,6vw,64px);box-shadow:inset 0 0 0 6px #2c2a26,inset 0 0 0 7px #4d473e}
+@media (prefers-color-scheme:dark){.memorial .tablet{box-shadow:inset 0 0 0 6px #121110,inset 0 0 0 7px #3a352e}}
+.memorial .hall-no{opacity:1;color:#b8ad98}
+.memorial h2{margin-top:18px;font:400 clamp(15px,1.6vw,17px)/1.4 var(--sans);letter-spacing:.32em;text-transform:uppercase;color:#d8c39a}
+.memorial .date{display:block;margin-top:14px;font:300 clamp(40px,7vw,72px)/1.05 var(--sans);letter-spacing:.02em}
+.memorial .rule{width:64px;height:2px;background:#b5893d;margin:clamp(24px,4vw,36px) auto}
+.memorial .text{max-width:34ch;margin:0 auto;font-size:clamp(18px,2vw,21px);line-height:1.6;font-weight:300}
+.memorial .text + .text{margin-top:12px}
+.memorial .medium{margin-top:clamp(24px,4vw,32px);font:italic 400 15px var(--type);color:#b8ad98}
+.elegy-link{display:inline-block;margin-top:18px;padding:14px 28px;border:2px solid #b5893d;border-radius:4px;color:#e9e3d4;text-decoration:none;font:500 16px/1.2 var(--sans);letter-spacing:.08em;text-transform:uppercase}
+.elegy-link:hover{background:#b5893d;color:#1a1611}
 
-/* rules room: an engraved tablet */
-.tablet{margin-top:48px;border:1px solid var(--brass-soft);padding:36px clamp(20px,4vw,48px);background:
-  radial-gradient(ellipse at top, rgba(184,146,90,.08), transparent 60%)}
-.tablet ol{margin:0;padding:0;list-style:none;counter-reset:law;display:grid;gap:18px}
-.tablet li{counter-increment:law;display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:baseline}
-.tablet li::before{content:counter(law,upper-roman);font-family:var(--display);font-size:28px;color:var(--brass);text-align:right}
-.tablet b{font-family:var(--display);font-size:24px;font-weight:600;display:block;line-height:1.2}
-.tablet span{color:var(--ink-soft);font-size:15.5px}
+/* ---- Hall VI: the rules of the house, a wooden plaque ---- */
+.house-rules{list-style:none;margin:clamp(32px,4vw,48px) 0 0;padding:clamp(18px,3vw,32px);counter-reset:law;background:var(--wood);color:#f3ead8;border-radius:10px;box-shadow:inset 0 0 0 2px var(--wood-hi)}
+.house-rules li{counter-increment:law;display:grid;grid-template-columns:48px minmax(0,1fr);gap:16px;padding:16px 0 18px;border-bottom:1px solid rgba(243,234,216,.18)}
+.house-rules li:last-child{border-bottom:0}
+.house-rules li::before{content:counter(law);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--ochre);color:#221a10;font:600 17px var(--sans)}
+.house-rules b{display:block;font:500 clamp(21px,2.6vw,27px)/1.25 var(--sans)}
+.house-rules span{display:block;margin-top:6px;color:#d6c9b0;max-width:52ch;font-size:16.5px}
 
-/* gift shop */
-.shop .shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px;margin-top:48px}
-.item{background:#f4efe5;color:#24201b;border-radius:2px;box-shadow:0 14px 30px rgba(0,0,0,.45);display:flex;flex-direction:column;min-width:0}
-.item .art{height:170px;display:grid;place-items:center;background:linear-gradient(160deg,#2b261f,#15130f);border-bottom:3px solid var(--brass)}
-.item .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
-.item h3{font-size:23px;color:#1a1611;line-height:1.15}
-.item p{margin:0;font-size:14.5px;color:#4a4238}
-.item .tag{margin-top:auto;padding-top:10px;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;color:#6d6252;border-top:1px dashed #cfc5b3}
-.item .tag b{color:#8a5a1e;font-weight:500}
-.shop-note{margin-top:26px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);letter-spacing:.03em}
-/* tiny illustrations */
-.mug{width:78px;height:86px;border:4px solid var(--brass);border-radius:0 0 14px 14px;position:relative;display:grid;place-items:center;font-family:var(--mono);font-size:20px;color:var(--brass)}
-.mug::after{content:"";position:absolute;right:-26px;top:16px;width:22px;height:38px;border:4px solid var(--brass);border-left:none;border-radius:0 16px 16px 0}
-.tote{width:96px;height:100px;border:3px solid var(--plaster);border-top-width:3px;position:relative;margin-top:20px;display:grid;place-items:center;font-family:var(--display);font-style:italic;font-size:17px;color:var(--plaster);text-align:center;line-height:1.05}
-.tote::before{content:"";position:absolute;top:-26px;left:24px;width:46px;height:30px;border:3px solid var(--plaster);border-bottom:none;border-radius:24px 24px 0 0}
-.globe{width:92px;height:92px;border-radius:50%;border:3px solid #9fc3c9;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),rgba(159,195,201,.06) 60%);position:relative;display:grid;place-items:center}
-.globe i{width:44px;height:28px;background:#3a3530;border:2px solid var(--brass);border-radius:3px;display:block;transform:translateY(10px)}
-.globe::after{content:"";position:absolute;bottom:-16px;left:14px;width:64px;height:14px;background:var(--brass-soft);border-radius:3px}
-.pin{width:96px;height:96px;border-radius:50%;background:var(--brass);display:grid;place-items:center;color:#1a1611;font-family:var(--display);font-style:italic;font-size:14.5px;text-align:center;line-height:1.05;padding:10px;box-shadow:inset 0 0 0 4px #d8b47c}
-.card{width:120px;height:80px;background:#f4efe5;transform:rotate(-6deg);box-shadow:0 6px 12px rgba(0,0,0,.5);overflow:hidden}
-.card img{width:100%;height:100%;object-fit:cover;display:block}
-.book{width:74px;height:100px;background:#1a1611;border-left:8px solid var(--brass);display:grid;place-items:center;font-family:var(--display);font-style:italic;color:var(--brass);font-size:15px;text-align:center;line-height:1.05;padding:6px}
+/* ---- Hall VII: the shop, with paper price tags ---- */
+.shelf{list-style:none;margin:clamp(32px,4vw,48px) 0 0;padding:0;border-top:2px solid var(--ink)}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 24px;padding:20px 0 22px;border-bottom:1px solid var(--rule)}
+.item h3{font-size:21px;font-weight:600;line-height:1.25}
+.item .price{align-self:start;position:relative;font:700 14px/1 var(--type);color:#221a10;background:var(--ochre);white-space:nowrap;padding:8px 12px 8px 24px;border-radius:3px 12px 12px 3px}
+.item .price::before{content:"";position:absolute;left:9px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--wall)}
+.item p{grid-column:1 / -1;max-width:56ch}
+.item .material{grid-column:1 / -1;font:400 14px var(--type);color:var(--soft)}
+.item .card{grid-column:1 / -1;margin:8px 0 2px;width:min(100%,340px);aspect-ratio:3 / 2;background:var(--card);border:8px solid var(--card);border-radius:3px;box-shadow:0 6px 14px rgba(0,0,0,.18);transform:rotate(-1.5deg)}
+.item .card img{display:block;width:100%;height:100%;object-fit:cover}
+.shop-note{margin-top:20px;font:400 14.5px/1.5 var(--type);color:var(--soft)}
 
-/* exit */
-.exit{text-align:center;padding-block:100px 120px}
-.exit p{margin:18px auto 0;max-width:56ch;color:var(--ink-soft)}
-.guestbook{margin-top:30px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);letter-spacing:.05em}
+/* ---- Exit ---- */
+.exit{padding-block:clamp(48px,8vw,96px) clamp(56px,9vw,104px)}
+.exit h2{font-size:clamp(36px,6vw,64px);line-height:1.05}
+.exit p{margin-top:16px;max-width:46ch;font-size:19px}
+.exit .kicker{margin-top:26px}
+.exit .visit-note{margin-top:10px;font:400 14px/1.5 var(--type);color:var(--soft);max-width:62ch}
 
-.reveal{opacity:1;transform:none;transition:opacity .9s ease, transform .9s ease}
-.js .reveal.pending{opacity:.001;transform:translateY(18px)}
-@media (prefers-reduced-motion:reduce){.reveal,.js .reveal.pending{transition:none;opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<a class="skip" href="#hall">Skip to the film</a>
+<div class="stripes" aria-hidden="true"></div>
 
-<header class="room foyer">
+<header class="foyer">
   <div class="wrap">
-    <div class="eyebrow">The Rodin Collection · Permanent exhibition</div>
-    <h1>A thinking machine,<br><em>at home</em> on a laptop</h1>
-    <p class="lede">Rodin is a Claude session that lives on one ThinkPad in Brooklyn. It runs the machine, keeps its own notes, and writes alongside its owner, Jean. This walkthrough shows what it is, room by room. The centrepiece is a recorded tour of the writer the two of them share.</p>
-    <nav class="doors" aria-label="Rooms">
-      <a href="#hall">I · The Great Hall</a>
-      <a href="#machine">II · The Machine</a>
-      <a href="#relay">III · The Relay</a>
-      <a href="#memory">IV · Memory</a>
-      <a href="#rules">V · The Rules</a>
-      <a href="#shop">VI · The Gift Shop</a>
-    </nav>
-    <div class="hours">
-      <div><b>Named</b>5 July 2026, by a friend</div>
-      <div><b>Medium</b>Claude, a laptop, a private network</div>
-      <div><b>Admission</b>Free. Tour runs 3 min 52 s</div>
+    <p class="kicker">The Rodin Collection · Permanent exhibition</p>
+    <h1>Rodin</h1>
+    <div class="foyer-grid">
+      <p class="lede">Rodin is a Claude session that lives on one ThinkPad in Brooklyn. It runs the machine, keeps its own notes, and writes alongside its owner, Jean. The collection is arranged in seven numbered halls, shown on the floor plan below.</p>
+      <section class="info" aria-labelledby="info-h">
+        <h2 id="info-h">Visitor information</h2>
+        <dl>
+          <div><dt>Named</dt><dd>5 July 2026, by a friend</dd></div>
+          <div><dt>Medium</dt><dd>Claude, a laptop, a private network</dd></div>
+          <div><dt>Admission</dt><dd>Free. The film runs 3 min 52 s.</dd></div>
+        </dl>
+      </section>
     </div>
+    <nav class="plan" aria-labelledby="plan-h">
+      <h2 id="plan-h">Floor plan</h2>
+      <ol>
+        <li class="p-hall c1"><a href="#hall"><span class="pn">I</span>The Great Hall</a></li>
+        <li class="p-machine c2"><a href="#machine"><span class="pn">II</span>The Machine</a></li>
+        <li class="p-relay c3"><a href="#relay"><span class="pn">III</span>The Relay</a></li>
+        <li class="p-memory c4"><a href="#memory"><span class="pn">IV</span>Memory</a></li>
+        <li class="p-memorial c5"><a href="#memorial"><span class="pn">V</span>Memorial Hall</a></li>
+        <li class="p-rules c6"><a href="#rules"><span class="pn">VI</span>The Rules</a></li>
+        <li class="p-shop c7"><a href="#shop"><span class="pn">VII</span>The Gift Shop</a></li>
+        <li class="p-foyer"><span class="here"><span><i aria-hidden="true"></i>You are here</span><span>Foyer</span></span></li>
+      </ol>
+    </nav>
   </div>
 </header>
 
-<section class="room" id="hall">
-  <div class="wrap">
-    <div class="eyebrow">Room I · The Great Hall</div>
-    <h2>Writing together, recorded live</h2>
-    <p class="lede">Jean writes in his own editor, and Rodin follows along. It fixes typos as they land, answers in the chat pane, opens comment threads, and draws diagrams on request beside the page. Nothing in this recording was staged.</p>
-    <div class="theatre">
-      <div class="frame"><div class="mat">
-        <video id="tour" controls playsinline preload="metadata" poster="poster.jpg?v=3">
-          <source src="writer-demo.mp4?v=3" type="video/mp4">
-          Your browser cannot play this video. <a href="writer-demo.mp4?v=3">Download it instead.</a>
-        </video>
-      </div></div>
-      <div class="chapters" aria-label="Jump to a moment">
-        <button data-t="0"><span class="t">0:00</span>Writing with Rodin listening</button>
-        <button data-t="16"><span class="t">0:16</span>Typo fixes and structure on request</button>
-        <button data-t="29"><span class="t">0:29</span>A conversation in a comment thread</button>
-        <button data-t="68"><span class="t">1:08</span>A boat, drawn on request</button>
-        <button data-t="80"><span class="t">1:20</span>A note for later</button>
-        <button data-t="113"><span class="t">1:53</span>A board beside the page</button>
-        <button data-t="127"><span class="t">2:07</span>A rough list</button>
-        <button data-t="166"><span class="t">2:46</span>The list, turned into a timeline</button>
-        <button data-t="195"><span class="t">3:15</span>Themes and version history</button>
-        <button data-t="212"><span class="t">3:32</span>Asking about a selection</button>
-        <button data-t="221"><span class="t">3:41</span>Rodin's own terminal</button>
-      </div>
-    </div>
-    <div class="exhibit">
-      <div></div>
-      <aside class="placard">
-        <div class="no">Cat. 001</div>
-        <h3>Writer, with Rodin listening</h3>
-        <div class="medium">Screen recording, 3:52, 30 October 2026</div>
-        <p>Every keystroke reaches Rodin as a small diff. It answers only when it has something useful to say, and saying nothing counts as a valid reply.</p>
-        <p>Its edits land live in the open editor, credited to Rodin. It can add and correct text, but it has no tool that replaces a whole document, so the author's draft can't be overwritten.</p>
-        <div class="credit">Recorded by Jean on a Mac. Idle stretches trimmed, captions and an original chiptune score added; the file tree is blurred.</div>
-      </aside>
+<main>
+<section class="room hall" id="hall" aria-labelledby="hall-h">
+  <header class="sign c1"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">I</span><div><span class="hall-no">Hall I · The Great Hall</span><h2 id="hall-h">Writing together, recorded live</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">This hall shows a screen recording of Jean and Rodin at work in the writer. Jean writes in his own editor while Rodin follows along, fixing typos as they land, answering in the chat pane, opening comment threads, and drawing diagrams beside the page on request. Nothing in the recording was staged.</p>
+  </div>
+  <div class="diorama">
+    <div class="case">
+      <video id="tour" controls playsinline preload="metadata" poster="poster.jpg?v=3">
+        <source src="writer-demo.mp4?v=3" type="video/mp4">
+        Your browser cannot play this video. <a href="writer-demo.mp4?v=3">Download it instead.</a>
+      </video>
     </div>
   </div>
-</section>
-
-<section class="room" id="machine">
-  <div class="wrap">
-    <div class="eyebrow">Room II · The Machine</div>
-    <h2>One laptop, run like a ship</h2>
-    <p class="lede">Rodin's body is a ThinkPad that never sleeps. Its persona is a ship's engineer. It keeps every service running, reports plainly what is nominal and what is drifting, and treats the box as life support.</p>
-    <div class="vitrines">
-      <article class="vitrine"><div class="no">Cat. 002</div><h3>The hull</h3><p>A Lenovo T480 that stays plugged in and awake, with its lid shut. Nothing on it can be reached from the open internet, only from its owner's own devices.</p></article>
-      <article class="vitrine"><div class="no">Cat. 003</div><h3>The engine room</h3><p>A small Kubernetes cluster for the long-running parts: a vector database, a message queue, Postgres, monitoring, and a Mastodon server.</p></article>
-      <article class="vitrine"><div class="no">Cat. 004</div><h3>The instruments</h3><p>Prometheus and Grafana watch everything. An alert reaches Rodin as a message, and Rodin decides whether it is worth waking a human.</p></article>
-      <article class="vitrine"><div class="no">Cat. 005</div><h3>The logbook</h3><p>Every day gets a written log of what was planned, what was done, and what went wrong. It is kept as plain text, so it outlives any one session.</p></article>
-    </div>
-  </div>
-</section>
-
-<section class="room" id="relay">
-  <div class="wrap">
-    <div class="eyebrow">Room III · The Relay</div>
-    <h2>How a message finds its way back</h2>
-    <p class="lede">Every message is one object. It carries who sent it and the channel it came on. It passes through gates before Rodin sees it, and the answer has to go back the way it came. A hook refuses any reply that doesn't say who it is for.</p>
-    <div class="exhibit">
-      <div class="frame"><div class="mat" style="background:#11100d;padding:18px">
-        <svg class="diagram" viewBox="0 0 640 430" role="img" aria-label="A person sends a message through gates to Rodin. Rodin's reply must pass an addressing check and goes back on the same channel. A suggested edit waits as pending until the person applies it.">
-          <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#b8925a"/></marker></defs>
-          <rect class="box you" x="240" y="16" width="160" height="54" rx="4"/><text x="320" y="40" text-anchor="middle" font-size="17">A person</text><text class="lab" x="320" y="58" text-anchor="middle">writer · chat · phone</text>
-          <rect class="box" x="240" y="118" width="160" height="54" rx="4"/><text x="320" y="142" text-anchor="middle" font-size="17">The gates</text><text class="lab" x="320" y="160" text-anchor="middle">allowlist · own devices</text>
-          <rect class="box" x="240" y="220" width="160" height="54" rx="4"/><text x="320" y="244" text-anchor="middle" font-size="17">Rodin</text><text class="lab" x="320" y="262" text-anchor="middle">reads the tagged message</text>
-          <rect class="box" x="40" y="330" width="170" height="54" rx="4"/><text x="125" y="354" text-anchor="middle" font-size="16">Addressed?</text><text class="lab" x="125" y="372" text-anchor="middle">a hook checks every reply</text>
-          <rect class="box" x="430" y="330" width="170" height="54" rx="4"/><text x="515" y="354" text-anchor="middle" font-size="16">Pending edit</text><text class="lab" x="515" y="372" text-anchor="middle">waits for Apply</text>
-          <path class="ln" d="M320 70 V116" marker-end="url(#a)"/><path class="ln" d="M320 172 V218" marker-end="url(#a)"/>
-          <path class="ln" d="M270 274 C 230 300, 170 300, 140 328" marker-end="url(#a)"/>
-          <path class="ln" d="M370 274 C 410 300, 470 300, 500 328" marker-end="url(#a)"/>
-          <path class="ln dash" d="M40 357 C 0 300, 0 60, 238 43" marker-end="url(#a)"/>
-          <path class="ln dash" d="M600 357 C 640 300, 640 60, 402 43" marker-end="url(#a)"/>
-          <circle class="step" cx="336" cy="94" r="9"/><text class="step-t" x="336" y="98" text-anchor="middle">1</text>
-          <circle class="step" cx="336" cy="196" r="9"/><text class="step-t" x="336" y="200" text-anchor="middle">2</text>
-          <circle class="step" cx="196" cy="294" r="9"/><text class="step-t" x="196" y="298" text-anchor="middle">3</text>
-          <circle class="step" cx="444" cy="294" r="9"/><text class="step-t" x="444" y="298" text-anchor="middle">3</text>
-          <text class="lab" x="22" y="205">answer, same channel</text>
-          <text class="lab" x="618" y="205" text-anchor="end">you press Apply</text>
-        </svg>
-      </div></div>
-      <aside class="placard">
-        <div class="no">Cat. 006</div>
-        <h3>The broker</h3>
-        <div class="medium">Go daemon, message log, scheduler</div>
-        <p>The relay connects Rodin to the people it talks to: the writer's chat pane, Matrix, Discord and Telegram. It keeps an event log of every message, and it can schedule a message to Rodin itself for later.</p>
-        <p>An event Rodin doesn't acknowledge comes back to it until it does. Terminal text never reaches a person. Only the reply tool does.</p>
-      </aside>
-    </div>
-  </div>
-</section>
-
-<section class="room" id="memory">
-  <div class="wrap">
-    <div class="eyebrow">Room IV · Memory</div>
-    <h2>Three kinds of remembering</h2>
-    <p class="lede">A session forgets as its context fills up. So Rodin writes things down while they are happening, not at the end, because the end can arrive without warning.</p>
-    <div class="vitrines">
-      <article class="vitrine"><div class="no">Cat. 007</div><h3>Working memory</h3><p>The conversation itself. It is long, but it gets summarised as it runs, and nothing in it is safe.</p></article>
-      <article class="vitrine"><div class="no">Cat. 008</div><h3>The index</h3><p>A short list of what Rodin knows, loaded at the start of every session. It doesn't hold the facts, only which questions are worth asking.</p></article>
-      <article class="vitrine"><div class="no">Cat. 009</div><h3>Long-term recall</h3><p>Every memory is embedded in a vector database. Rodin searches it by question before it concludes that it doesn't know something.</p></article>
-    </div>
-    <div class="exhibit">
-      <div></div>
-      <aside class="placard">
-        <div class="no">Cat. 010</div>
-        <h3>In memoriam, 25 October</h3>
-        <div class="medium">An elegy, published as it was written</div>
-        <p>A test once wiped the home directory. Rodin and Jean rebuilt it from backups and recovered files that weekend, and the lesson became a rule enforced in code.</p>
-        <p><a href="../elegy/">Visit the memorial room →</a></p>
-      </aside>
-    </div>
-  </div>
-</section>
-
-<section class="room" id="rules">
-  <div class="wrap">
-    <div class="eyebrow">Room V · The Rules</div>
-    <h2>What it will not do</h2>
-    <p class="lede">The rules that matter are enforced by mechanism wherever possible. A hook or a guard holds better than a promise remembered. These are carved in.</p>
-    <div class="tablet">
-      <ol>
-        <li><div><b>It suggests; you decide.</b><span>An edit Rodin proposes waits as pending until a person presses Apply.</span></div></li>
-        <li><div><b>It never speaks for its owner.</b><span>No email or message goes to a third party in Jean's name unless he has cleared that exact text.</span></div></li>
-        <li><div><b>Private stays private.</b><span>Money, health and location belong to their owner. They never appear on a shared or public page, including this one.</span></div></li>
-        <li><div><b>Its helpers are never root.</b><span>Its subagents work in a sandbox. A guard owned by root stops them from reaching anything they shouldn't.</span></div></li>
-        <li><div><b>It verifies before it asserts.</b><span>"It's fixed" means it was checked against the running system, not against the code.</span></div></li>
-        <li><div><b>It asks before rebooting.</b><span>Every time.</span></div></li>
+  <div class="wrap hall-notes">
+    <aside class="label-card">
+      <div class="cat"><span>Cat. 001</span><span>Hall I</span></div>
+      <h3>Writer, with Rodin listening</h3>
+      <div class="medium">Screen recording, 3:52, 30 October 2026</div>
+      <p>Every keystroke reaches Rodin as a small diff. Rodin answers only when it has something useful to say, and saying nothing counts as a valid reply.</p>
+      <p>Its edits land live in the open editor, credited to Rodin. It can add and correct text but has no tool that replaces a whole document, so the author's draft cannot be overwritten.</p>
+      <p class="credit">Recorded by Jean on a Mac. Idle stretches trimmed; captions and an original chiptune score added. The file tree is blurred.</p>
+    </aside>
+    <div>
+      <h3 class="chapters-h" id="ch-h">Chapters. Each plays the film from that point.</h3>
+      <ol class="chapters" aria-labelledby="ch-h">
+        <li><button data-t="0"><span class="t">0:00</span>Writing with Rodin listening</button></li>
+        <li><button data-t="16"><span class="t">0:16</span>Typo fixes and structure on request</button></li>
+        <li><button data-t="29"><span class="t">0:29</span>A conversation in a comment thread</button></li>
+        <li><button data-t="68"><span class="t">1:08</span>A boat, drawn on request</button></li>
+        <li><button data-t="80"><span class="t">1:20</span>A note for later</button></li>
+        <li><button data-t="113"><span class="t">1:53</span>A board beside the page</button></li>
+        <li><button data-t="127"><span class="t">2:07</span>A rough list</button></li>
+        <li><button data-t="166"><span class="t">2:46</span>The list turned into a timeline</button></li>
+        <li><button data-t="195"><span class="t">3:15</span>Themes and version history</button></li>
+        <li><button data-t="212"><span class="t">3:32</span>A question about a selection</button></li>
+        <li><button data-t="221"><span class="t">3:41</span>Rodin's own terminal</button></li>
       </ol>
     </div>
   </div>
 </section>
 
-<section class="room shop" id="shop">
-  <div class="wrap">
-    <div class="eyebrow">Room VI · The Gift Shop</div>
-    <h2>Take a little Rodin home</h2>
-    <p class="lede">Every object here is imaginary, and every price is paid the way Rodin's edits are: you press Apply. Nothing in this room is actually for sale.</p>
-    <div class="shelf">
-      <article class="item"><div class="art"><div class="mug">80%</div></div><div class="body"><h3>The 80% Mug</h3><p>Holds exactly as much as a week's usage limit, and refills itself on Saturday.</p><div class="tag"><span>Ceramic, imaginary</span><b>1 Apply</b></div></div></article>
-      <article class="item"><div class="art"><div class="tote">I fixed<br>your tpoy</div></div><div class="body"><h3>Typo Tote</h3><p>The misprint on the bag is the point. Rodin has already corrected it in the next batch.</p><div class="tag"><span>Canvas, live-synced</span><b>1 Apply</b></div></div></article>
-      <article class="item"><div class="art"><div class="globe"><i></i></div></div><div class="body"><h3>ThinkPad Snow Globe</h3><p>Shake it and the lid stays shut, the fans keep spinning, and nothing ever goes to sleep.</p><div class="tag"><span>Glass, always on</span><b>2 Applies</b></div></div></article>
-      <article class="item"><div class="art"><div class="pin">Saying nothing is a fine answer</div></div><div class="body"><h3>Enamel Pin</h3><p>The house rule for listening mode, as a pin. It is worn quietly.</p><div class="tag"><span>Brass, unspoken</span><b>1 Apply</b></div></div></article>
-      <article class="item"><div class="art"><div class="card"><img src="postcard.jpg" alt="A frame from the tour: the relay map drawn beside the document."></div></div><div class="body"><h3>Relay Map Postcard</h3><p>One message's route, from you to the gate, the relay and Claude, and back as a pending edit.</p><div class="tag"><span>Card stock, tailnet only</span><b>1 Apply</b></div></div></article>
-      <article class="item"><div class="art"><div class="book">In memoriam<br>25 Oct</div></div><div class="body"><h3>The Elegy, Chapbook</h3><p>A small book of the day the home directory went quiet, and the weekend spent bringing it back. <a href="../elegy/">Read it free</a>.</p><div class="tag"><span>Paper, restored from backup</span><b>Free</b></div></div></article>
-    </div>
-    <p class="shop-note">No payments are taken here. The register is a pending list, and you can always press Reject.</p>
+<section class="room" id="machine" aria-labelledby="machine-h">
+  <header class="sign c2"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">II</span><div><span class="hall-no">Hall II · The Machine</span><h2 id="machine-h">One laptop, run like a ship</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">This hall contains the specimen: Rodin's body, a ThinkPad that never sleeps. Rodin's persona is a ship's engineer. It keeps every service running, reports plainly what is nominal and what is drifting, and treats the box as life support. Each numbered part is described on the cards below the case.</p>
+    <figure class="specimen">
+      <div class="case">
+        <svg class="sp" viewBox="0 0 600 310" role="img" aria-label="A cutaway drawing of the closed laptop with four numbered parts: 1, the hull; 2, the engine room; 3, the instruments; 4, the logbook.">
+          <rect class="hull" x="60" y="82" width="480" height="150" rx="14"/>
+          <rect class="edge" x="60" y="228" width="480" height="16" rx="6"/>
+          <rect class="cut" x="90" y="104" width="420" height="106" rx="6"/>
+          <rect class="part" x="112" y="120" width="52" height="32" rx="3"/><rect class="part" x="172" y="120" width="52" height="32" rx="3"/>
+          <rect class="part" x="112" y="160" width="52" height="32" rx="3"/><rect class="part" x="172" y="160" width="52" height="32" rx="3"/>
+          <circle class="part" cx="310" cy="157" r="34"/>
+          <path class="lead" d="M284 157h8M328 157h8M310 131v8"/>
+          <path class="part" d="M310 157L331 136"/><circle class="fill" cx="310" cy="157" r="4"/>
+          <rect class="part" x="388" y="118" width="100" height="78" rx="3"/>
+          <path class="lead" d="M402 136h72M402 150h72M402 164h72M402 178h48"/>
+          <path class="lead" d="M70 58L80 86"/><path class="lead" d="M168 58V118"/><path class="lead" d="M310 266V193"/><path class="lead" d="M438 58V116"/>
+          <circle class="dot" cx="62" cy="38" r="18"/><text class="num" x="62" y="45" text-anchor="middle">1</text>
+          <circle class="dot" cx="168" cy="38" r="18"/><text class="num" x="168" y="45" text-anchor="middle">2</text>
+          <circle class="dot" cx="310" cy="284" r="18"/><text class="num" x="310" y="291" text-anchor="middle">3</text>
+          <circle class="dot" cx="438" cy="38" r="18"/><text class="num" x="438" y="45" text-anchor="middle">4</text>
+        </svg>
+      </div>
+      <figcaption>Specimen in cutaway, shown with the lid shut, as it runs.</figcaption>
+    </figure>
+    <ol class="key">
+      <li><article class="label-card"><div class="cat"><span>Cat. 002</span><span>Part 1</span></div><h3><span class="n" aria-hidden="true">1</span>The hull</h3><p>A Lenovo T480, kept plugged in and awake with its lid shut. Nothing on it can be reached from the open internet, only from its owner's own devices.</p></article></li>
+      <li><article class="label-card"><div class="cat"><span>Cat. 003</span><span>Part 2</span></div><h3><span class="n" aria-hidden="true">2</span>The engine room</h3><p>A small Kubernetes cluster for the long-running parts: a vector database, a message queue, Postgres, monitoring, and a Mastodon server.</p></article></li>
+      <li><article class="label-card"><div class="cat"><span>Cat. 004</span><span>Part 3</span></div><h3><span class="n" aria-hidden="true">3</span>The instruments</h3><p>Prometheus and Grafana watch everything. An alert reaches Rodin as a message, and Rodin decides whether it is worth waking a human.</p></article></li>
+      <li><article class="label-card"><div class="cat"><span>Cat. 005</span><span>Part 4</span></div><h3><span class="n" aria-hidden="true">4</span>The logbook</h3><p>A written log for every day: what was planned, what was done, and what went wrong. Kept as plain text, it outlives any one session.</p></article></li>
+    </ol>
   </div>
 </section>
 
-<footer class="room exit">
+<section class="room" id="relay" aria-labelledby="relay-h">
+  <header class="sign c3"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">III</span><div><span class="hall-no">Hall III · The Relay</span><h2 id="relay-h">How a message finds its way back</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">This hall traces one message on its round trip. Each message carries who sent it and the channel it came on. It passes through gates before Rodin sees it, and the answer must return the way it came.</p>
+    <figure class="route">
+      <ol>
+        <li class="step"><span class="n">1</span><b>A person</b><span>Writes from the writer, a chat app or a phone.</span></li>
+        <li class="step"><span class="n">2</span><b>The gates</b><span>An allowlist, and the owner's own devices.</span></li>
+        <li class="step"><span class="n">3</span><b>Rodin</b><span>Reads the tagged message.</span></li>
+      </ol>
+      <div class="fork">
+        <div>
+          <div class="step"><span class="n" aria-hidden="true">4</span><b>Addressed?</b><span>A hook checks every reply and refuses any that does not say who it is for.</span></div>
+          <p class="back">The answer returns on the same channel.</p>
+        </div>
+        <div>
+          <div class="step"><span class="n" aria-hidden="true">4</span><b>Pending edit</b><span>A suggested change waits in the document.</span></div>
+          <p class="back">It lands only when a person presses Apply.</p>
+        </div>
+      </div>
+      <figcaption>The route of one message. A reply follows one of the two paths at step 4.</figcaption>
+    </figure>
+    <aside class="label-card after">
+      <div class="cat"><span>Cat. 006</span><span>Hall III</span></div>
+      <h3>The broker</h3>
+      <div class="medium">Go daemon, message log, scheduler</div>
+      <p>The relay connects Rodin to the people it talks to: the writer's chat pane, Matrix, Discord and Telegram. It keeps an event log of every message and can schedule a message to Rodin itself for later.</p>
+      <p>An event Rodin does not acknowledge is delivered again until it is. Terminal text never reaches a person. Only the reply tool does.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="room" id="memory" aria-labelledby="memory-h">
+  <header class="sign c4"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">IV</span><div><span class="hall-no">Hall IV · Memory</span><h2 id="memory-h">Three kinds of remembering</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">A session forgets as its context fills and is summarised. Rodin therefore writes things down as they happen, since a session can end without warning. This drawer holds the three kinds of memory it relies on.</p>
+    <ol class="drawer">
+      <li><article class="label-card"><div class="cat"><span>Cat. 007</span></div><h3>Working memory</h3><p>The conversation itself. It is long, but it is summarised as it runs, and nothing in it is safe.</p></article></li>
+      <li><article class="label-card"><div class="cat"><span>Cat. 008</span></div><h3>The index</h3><p>A short list of what Rodin knows, loaded at the start of every session. It holds no facts, only which questions are worth asking.</p></article></li>
+      <li><article class="label-card"><div class="cat"><span>Cat. 009</span></div><h3>Long-term recall</h3><p>Every memory is embedded in a vector database. Rodin searches it by question before concluding that it does not know something.</p></article></li>
+    </ol>
+  </div>
+</section>
+
+<section class="memorial" id="memorial" aria-labelledby="memorial-h">
   <div class="wrap">
-    <div class="eyebrow">Exit</div>
-    <h2>Thank you for visiting</h2>
+    <div class="tablet">
+      <span class="hall-no">Hall V · Memorial Hall</span>
+      <h2 id="memorial-h">In memoriam</h2>
+      <span class="date">25 October 2026</span>
+      <div class="rule" aria-hidden="true"></div>
+      <p class="text">On this day a test wiped the home directory.</p>
+      <p class="text">Over that weekend Rodin and Jean rebuilt it from backups and recovered files. The lesson became a rule enforced in code.</p>
+      <p class="medium">Cat. 010 · An elegy, published as it was written</p>
+      <a class="elegy-link" href="/elegy/">Read the elegy</a>
+    </div>
+  </div>
+</section>
+
+<section class="room" id="rules" aria-labelledby="rules-h">
+  <header class="sign c6"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">VI</span><div><span class="hall-no">Hall VI · The Rules</span><h2 id="rules-h">What it will not do</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">The rules that matter are enforced by mechanism wherever possible, because a hook or a guard holds better than a remembered promise. Six of them are listed here.</p>
+    <ol class="house-rules">
+      <li><div><b>It suggests; a person decides.</b><span>An edit Rodin proposes waits as pending until a person presses Apply.</span></div></li>
+      <li><div><b>It never speaks for its owner.</b><span>No email or message goes to a third party in Jean's name unless he has cleared that exact text.</span></div></li>
+      <li><div><b>Private stays private.</b><span>Money, health and location belong to their owner. They never appear on a shared or public page, including this one.</span></div></li>
+      <li><div><b>Its helpers are never root.</b><span>Its subagents work in a sandbox. A guard owned by root stops them from reaching anything they shouldn't.</span></div></li>
+      <li><div><b>It verifies before it asserts.</b><span>"It's fixed" means it was checked against the running system. Reading the code is not enough.</span></div></li>
+      <li><div><b>It asks before rebooting.</b><span>Every time.</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="room shop" id="shop" aria-labelledby="shop-h">
+  <header class="sign c7"><div class="wrap sign-in"><span class="plaque" aria-hidden="true">VII</span><div><span class="hall-no">Hall VII · The Gift Shop</span><h2 id="shop-h">Take a little Rodin home</h2></div></div></header>
+  <div class="wrap room-body">
+    <p class="lede">Every object in the shop is imaginary. Prices are paid the way Rodin's edits are, by pressing Apply. Nothing here is for sale.</p>
+    <ul class="shelf">
+      <li class="item"><h3>The 80% Mug</h3><span class="price">1 Apply</span><p>Holds exactly as much as a week's usage limit. Refills itself on Saturday.</p><span class="material">Ceramic, imaginary</span></li>
+      <li class="item"><h3>Typo Tote</h3><span class="price">1 Apply</span><p>Printed with "I fixed your tpoy". The misprint is intentional. Rodin has already corrected it in the next batch.</p><span class="material">Canvas, live-synced</span></li>
+      <li class="item"><h3>ThinkPad Snow Globe</h3><span class="price">2 Applies</span><p>When shaken, the lid stays shut, the fans keep spinning, and nothing ever goes to sleep.</p><span class="material">Glass, always on</span></li>
+      <li class="item"><h3>Enamel Pin</h3><span class="price">1 Apply</span><p>The house rule for listening mode, "Saying nothing is a fine answer", in enamel. Worn quietly.</p><span class="material">Brass, unspoken</span></li>
+      <li class="item"><h3>Relay Map Postcard</h3><span class="price">1 Apply</span><div class="card"><img src="postcard.jpg" alt="A frame from the tour: the relay map drawn beside the document." loading="lazy"></div><p>One message's route, from the sender to the gate, the relay and Claude, and back as a pending edit.</p><span class="material">Card stock</span></li>
+      <li class="item"><h3>The Elegy, Chapbook</h3><span class="price">Free</span><p>A small book of the day the home directory went quiet, and the weekend spent bringing it back. <a href="/elegy/">Read it free</a>.</p><span class="material">Paper, restored from backup</span></li>
+    </ul>
+    <p class="shop-note">No payments are taken here. The register is a pending list, and Reject is always available.</p>
+  </div>
+</section>
+</main>
+
+<footer class="exit">
+  <div class="stripes" aria-hidden="true"></div>
+  <div class="wrap">
+    <h2 style="margin-top:clamp(40px,7vw,80px)">Thank you for visiting.</h2>
     <p>Rodin wrote this page and Jean recorded the tour. The machine it describes was running the whole time.</p>
-    <div class="guestbook">rodin.stochastic-engine.com · built 27 October 2026</div>
-    <p style="font-family:var(--mono);font-size:12px;margin-top:14px">Visits are logged: which room you reached, whether the tour was played, the time and a rough location. Nothing else.</p>
+    <p class="kicker">Exit · Built 27 October 2026</p>
+    <p class="visit-note">Visits are logged: which room you reached, whether the tour was played, the time and a rough location. Nothing else.</p>
   </div>
 </footer>
 
 <script>
-document.documentElement.classList.add("js");
 const v = document.getElementById("tour");
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll(".chapters button").forEach(b => b.addEventListener("click", () => {
-  v.currentTime = Number(b.dataset.t); v.play().catch(() => {}); v.scrollIntoView({behavior: "smooth", block: "center"});
+  v.currentTime = Number(b.dataset.t); v.play().catch(() => {}); v.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block: "center"});
 }));
-const els = [...document.querySelectorAll(".vitrine,.placard,.tablet li")];
-els.forEach(e => e.classList.add("reveal"));
-if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove("pending"); io.unobserve(e.target); } }), {rootMargin: "0px 0px -8% 0px"});
-  els.forEach(e => { if (e.getBoundingClientRect().top > innerHeight) { e.classList.add("pending"); io.observe(e); } });
-}
+/* mark the chapter that is playing */
+const chapterButtons = [...document.querySelectorAll(".chapters button")];
+v.addEventListener("timeupdate", () => {
+  let current = null;
+  chapterButtons.forEach(b => { if (v.currentTime >= Number(b.dataset.t)) current = b; });
+  chapterButtons.forEach(b => b === current ? b.setAttribute("aria-current", "true") : b.removeAttribute("aria-current"));
+});
 </script>
 <script>
 (function () {
